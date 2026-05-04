@@ -1,85 +1,80 @@
 #!/usr/bin/env node
 /**
- * Build script: injects Vercel env vars into HTML at deploy time
- * Looks for index.html or daily-tracker.html, injects env vars, outputs to public/index.html
+ * Build script: Injects Vercel env vars into HTML, outputs to public/
+ * Reads: GH_OWNER, GH_REPO, GH_TOKEN, GH_BRANCH, GH_PATH from process.env
+ * Writes: public/index.html (ready to serve)
+ * No user config needed - token auto-loaded from env vars
  */
 
 const fs = require('fs');
 const path = require('path');
 
-// Read env vars from Vercel
 const owner = process.env.GH_OWNER || 'YOUR_GITHUB_USERNAME';
 const repo = process.env.GH_REPO || 'YOUR_DATA_REPO_NAME';
 const token = process.env.GH_TOKEN || '';
 const branch = process.env.GH_BRANCH || 'main';
 const ghPath = process.env.GH_PATH || 'expenses';
 
-console.log('🔨 Building...');
+console.log('\n🔨 BUILD STARTING\n');
 console.log(`  GH_OWNER: ${owner}`);
 console.log(`  GH_REPO: ${repo}`);
-console.log(`  GH_TOKEN: ${token ? '***' : '(empty)'}`);
+console.log(`  GH_TOKEN: ${token ? '(set - ' + token.length + ' chars)' : '(NOT SET)'}`);
+console.log(`  GH_BRANCH: ${branch}`);
+console.log(`  GH_PATH: ${ghPath}\n`);
 
-// Find HTML file - try index.html first, then daily-tracker.html
+// Find HTML file
 let htmlPath = path.join(__dirname, 'index.html');
-let htmlSource = 'index.html';
-
 if (!fs.existsSync(htmlPath)) {
   const alt = path.join(__dirname, 'daily-tracker.html');
   if (fs.existsSync(alt)) {
     htmlPath = alt;
-    htmlSource = 'daily-tracker.html';
-    console.log(`  ⚠ index.html not found, using ${htmlSource}`);
+    console.log('  ⚠ Using daily-tracker.html\n');
   } else {
-    console.error('❌ ERROR: Neither index.html nor daily-tracker.html found in repo root');
-    console.error('   Make sure you have renamed daily-tracker.html to index.html');
+    console.error('❌ ERROR: No index.html or daily-tracker.html found\n');
     process.exit(1);
   }
 }
 
 try {
-  // Read HTML
   let html = fs.readFileSync(htmlPath, 'utf8');
-  console.log(`  ✓ Read ${htmlSource} (${(html.length / 1024).toFixed(1)} KB)`);
+  console.log(`  ✓ Read HTML (${(html.length / 1024).toFixed(1)} KB)`);
 
-  // Replace DEFAULTS block
-  const replacement = `const DEFAULTS={
+  // 1. Replace DEFAULTS object values (simple string replacement)
+  html = html.replace(
+    /const DEFAULTS=\{[\s\S]*?\}/,
+    `const DEFAULTS={
   owner : '${owner}',
   repo  : '${repo}',
   branch: '${branch}',
   path  : '${ghPath}'
-};
-// TOKEN injected from Vercel env: GH_TOKEN
-const _envToken = '${token}';`;
+}`
+  );
+  console.log('  ✓ Updated DEFAULTS');
 
-  // Match the block from "const DEFAULTS=" to the closing "}" and beyond
-  const pattern = /const DEFAULTS=\{[^}]*\};[\s\S]*?const _envToken\s*=\s*['""]['""];?/;
-  const matched = html.match(pattern);
-  
-  if (!matched) {
-    console.error('❌ ERROR: Could not find DEFAULTS block in HTML');
-    console.error('   Make sure you\'re using the updated daily-tracker.html file');
-    process.exit(1);
-  }
+  // 2. Replace _envToken value (simple string replacement)
+  html = html.replace(
+    /const _envToken = '';/,
+    `const _envToken = '${token}';`
+  );
+  console.log('  ✓ Injected token');
 
-  html = html.replace(pattern, replacement);
-  console.log(`  ✓ Injected env vars into DEFAULTS`);
-
-  // Ensure public dir exists
+  // 3. Ensure public dir exists
   const publicDir = path.join(__dirname, 'public');
   if (!fs.existsSync(publicDir)) {
     fs.mkdirSync(publicDir, { recursive: true });
-    console.log(`  ✓ Created public/`);
   }
 
-  // Write to public/index.html
+  // 4. Write output
   const outPath = path.join(publicDir, 'index.html');
   fs.writeFileSync(outPath, html);
-  console.log(`  ✓ Wrote public/index.html`);
+  console.log(`  ✓ Wrote public/index.html\n`);
 
-  console.log('\n✅ Build complete!\n');
-  
+  console.log('✅ BUILD SUCCESS\n');
+  process.exit(0);
+
 } catch (err) {
-  console.error('❌ Build failed:', err.message);
+  console.error(`\n❌ BUILD FAILED\n`);
+  console.error(err.message);
   console.error(err.stack);
   process.exit(1);
 }
