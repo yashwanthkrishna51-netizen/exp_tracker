@@ -178,22 +178,24 @@ const COLS=['#f5a623','#4facfe','#00d4a8','#ff4d6d','#a78bfa','#ffd166','#fb923c
 const MNS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const FULLM=['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-// ── ✏ EDIT owner + repo only — NEVER put token here ──
+// ── DEFAULTS (for local testing without Vercel) ──
+// On Vercel: these are overridden by build.js from env vars
 const DEFAULTS={
- owner : 'yashwanthkrishna51-netizen',   // e.g. 'yashwanth123'
-  repo  : 'expense_tracker',         // e.g. 'my-finances'
+  owner : 'YOUR_GITHUB_USERNAME',   // e.g. 'yashwanthkrishna51-netizen'
+  repo  : 'YOUR_DATA_REPO_NAME',    // e.g. 'my-finances'  (NOT this app repo)
   branch: 'main',
   path  : 'expenses'
 };
-// TOKEN: enter via ⚙ Config tab — stored in localStorage, never in code
+// Note: token injected at build time or via ⚙ Config tab
 // ─────────────────────────────────────────────────────
 
 // ── STATE ─────────────────────────────────────────────
 const _saved=JSON.parse(localStorage.getItem('spent_cfg')||'{}');
+const _envToken = '';  // build.js injects here
 let CFG={
   owner : _saved.owner  || DEFAULTS.owner,
   repo  : _saved.repo   || DEFAULTS.repo,
-  token : _saved.token  || '',        // token only ever from localStorage
+  token : _envToken || _saved.token || '',  // env var > localStorage > empty
   branch: _saved.branch || DEFAULTS.branch,
   path  : _saved.path   || DEFAULTS.path,
 };
