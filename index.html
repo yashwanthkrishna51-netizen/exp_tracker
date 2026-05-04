@@ -178,23 +178,22 @@ const COLS=['#f5a623','#4facfe','#00d4a8','#ff4d6d','#a78bfa','#ffd166','#fb923c
 const MNS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const FULLM=['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-// ── ✏ EDIT THESE ONCE — your GitHub details ───────────
+// ── ✏ EDIT owner + repo only — NEVER put token here ──
 const DEFAULTS={
-  owner : 'YOUR_GITHUB_USERNAME',   // e.g. 'yashwanth123'
-  repo  : 'YOUR_REPO_NAME',         // e.g. 'my-finances'
-  token : 'YOUR_PAT_TOKEN',         // e.g. 'ghp_xxxxxxxxxxxx'
+ owner : 'yashwanthkrishna51-netizen',   // e.g. 'yashwanth123'
+  repo  : 'expense_tracker',         // e.g. 'my-finances'
   branch: 'main',
-  path  : 'expenses'                // folder inside repo
+  path  : 'expenses'
 };
+// TOKEN: enter via ⚙ Config tab — stored in localStorage, never in code
 // ─────────────────────────────────────────────────────
 
 // ── STATE ─────────────────────────────────────────────
-const _saved=JSON.parse(localStorage.getItem('spent_cfg')||'{}')\;
-// Saved values take priority; DEFAULTS are fallback
+const _saved=JSON.parse(localStorage.getItem('spent_cfg')||'{}');
 let CFG={
   owner : _saved.owner  || DEFAULTS.owner,
   repo  : _saved.repo   || DEFAULTS.repo,
-  token : _saved.token  || DEFAULTS.token,
+  token : _saved.token  || '',        // token only ever from localStorage
   branch: _saved.branch || DEFAULTS.branch,
   path  : _saved.path   || DEFAULTS.path,
 };
