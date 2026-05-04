@@ -12,12 +12,5 @@
       "src": "/(.*)",
       "dest": "/index.html"
     }
-  ],
-  "env": {
-    "GH_OWNER": "@gh-owner",
-    "GH_REPO": "@gh-repo",
-    "GH_TOKEN": "@gh-token",
-    "GH_BRANCH": "@gh-branch",
-    "GH_PATH": "@gh-path"
-  }
+  ]
 }
