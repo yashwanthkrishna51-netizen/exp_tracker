@@ -199,6 +199,8 @@ let CFG={
   branch: _saved.branch || DEFAULTS.branch,
   path  : _saved.path   || DEFAULTS.path,
 };
+// Track if token came from build-time injection (Vercel env)
+window._envToken = (_envToken && _envToken !== '');
 let CACHE=JSON.parse(localStorage.getItem('spent_cache')||'{}'); // {YYYY-MM:[entries]}
 let selCat='';let selCard='';let curTab='add';
 let viewDate=todayStr();let viewMonth=viewDate.slice(0,7);
@@ -227,6 +229,23 @@ function setTab(t){
   document.querySelectorAll('.hpill').forEach(p=>p.classList.remove('on'));
   const el=document.getElementById('tab-'+t);if(el)el.classList.add('on');
   render();
+}
+
+function cfgReady(){
+  // Returns true if GitHub config is fully loaded (from Vercel or user input)
+  return CFG.owner && CFG.owner !== 'YOUR_GITHUB_USERNAME' && CFG.repo && CFG.repo !== 'YOUR_DATA_REPO_NAME' && CFG.token;
+}
+
+function cfgStatus(){
+  if(!cfgReady()){
+    const missing=[];
+    if(!CFG.owner||CFG.owner==='YOUR_GITHUB_USERNAME')missing.push('username');
+    if(!CFG.repo||CFG.repo==='YOUR_DATA_REPO_NAME')missing.push('repo');
+    if(!CFG.token)missing.push('token');
+    return `<div class="alert alert-w" style="margin-bottom:14px">⚙ Setup: complete ⚙ Config (${missing.join(', ')})</div>`;
+  }
+  const src=window._envToken?'(auto-loaded from Vercel)':'(from browser storage)';
+  return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:9px 12px;background:rgba(0,212,168,.08);border:1px solid rgba(0,212,168,.2);border-radius:8px;font-size:11px;color:var(--teal)">✓ Connected to <strong>${CFG.repo}</strong> ${src}</div>`;
 }
 
 // ── GITHUB ────────────────────────────────────────────
@@ -347,6 +366,7 @@ function renderAdd(){
   const today=todayStr();
   const todayEntries=(CACHE[today.slice(0,7)]||[]).filter(e=>e.date===today);
   const todayTotal=todayEntries.reduce((s,e)=>s+e.amount,0);
+  const cfgMsg=cfgStatus();
 
   const catPills=CATS.map(c=>`<button class="cat-p${selCat===c?' on':''}" 
     style="${selCat===c?`background:${CC[c]}22;color:${CC[c]};border-color:${CC[c]}55`:''}"
@@ -359,6 +379,7 @@ function renderAdd(){
     :[...todayEntries].reverse().map(e=>entryRow(e)).join('');
 
   return `
+    ${cfgMsg}
     <div class="add-panel">
       <div style="margin-bottom:12px"><label class="lbl">Category</label><div class="cats">${catPills}</div></div>
       <div class="ap-top">
@@ -595,6 +616,8 @@ function dlCsv(){
 // ── CONFIG TAB ────────────────────────────────────────
 function renderConfig(){
   const cards=getCards();
+  const tokenSource=CFG.token?(window._envToken?'from Vercel config':'from browser storage'):'not set';
+  const tokenBadgeColor=CFG.token?'var(--teal)':'var(--red)';
   return `
     <div class="cfg">
       <div class="cfg-title">GitHub Storage Config</div>
@@ -604,7 +627,7 @@ function renderConfig(){
         <div><label class="lbl">Repository Name</label><input class="fi" id="cfg-repo" value="${CFG.repo}" placeholder="my-finances"></div>
         <div><label class="lbl">Branch</label><input class="fi" id="cfg-branch" value="${CFG.branch||'main'}" placeholder="main"></div>
       </div>
-      <div><label class="lbl">Personal Access Token (PAT)</label>
+      <div><label class="lbl">Personal Access Token (PAT) <span style="color:${tokenBadgeColor};font-size:9px;font-weight:700;margin-left:8px">${tokenSource.toUpperCase()}</span></label>
         <input class="fi" id="cfg-token" type="password" value="${CFG.token}" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off"></div>
       <div style="margin-top:8px"><label class="lbl">Folder Path (optional)</label>
         <input class="fi" id="cfg-path" value="${CFG.path||'expenses'}" placeholder="expenses"></div>
