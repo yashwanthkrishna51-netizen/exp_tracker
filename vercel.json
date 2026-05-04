@@ -1,16 +1,5 @@
 {
   "version": 2,
   "buildCommand": "node build.js",
-  "builds": [
-    {
-      "src": "public/index.html",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
-  ]
+  "public": "public"
 }
