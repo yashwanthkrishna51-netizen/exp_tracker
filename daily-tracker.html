@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SPENT · YK</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#0c0e14;--s1:#13161f;--s2:#1a1e2a;--s3:#222736;--br:#2d3148;
+  --gold:#f5a623;--blue:#4facfe;--teal:#00d4a8;--red:#ff4d6d;
+  --yellow:#ffd166;--purple:#a78bfa;--orange:#fb923c;--green:#4ade80;
+  --tx:#e2e5f0;--txm:#7a7f94;--txd:#3e4257;
+  --syne:'Syne',sans-serif;--mono:'Space Mono',monospace;
+  --r:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--tx);font-family:var(--syne);min-height:100vh;overflow-x:hidden;}
+
+/* ── HDR ── */
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;
+  border-bottom:1px solid var(--br);background:var(--s1);position:sticky;top:0;z-index:100;gap:10px;}
+.logo{font-family:var(--mono);font-weight:700;font-size:16px;letter-spacing:4px;color:var(--gold);white-space:nowrap;}
+.logo span{color:var(--txd);}
+.hdr-pills{display:flex;gap:6px;}
+.hpill{padding:5px 14px;border-radius:99px;font-size:11px;font-weight:700;cursor:pointer;border:none;
+  background:var(--s2);color:var(--txm);letter-spacing:.5px;transition:all .15s;}
+.hpill.on{background:var(--gold);color:#000;}
+.hdr-r{display:flex;align-items:center;gap:8px;}
+.hico{background:transparent;border:1px solid var(--br);color:var(--txm);padding:6px 12px;
+  border-radius:8px;font-family:var(--syne);font-size:12px;cursor:pointer;transition:all .15s;}
+.hico:hover{border-color:var(--gold);color:var(--gold);}
+.sync-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px;}
+.sync-dot.ok{background:var(--teal);}
+.sync-dot.err{background:var(--red);}
+.sync-dot.ing{background:var(--yellow);animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── MAIN ── */
+.main{max-width:1100px;margin:0 auto;padding:20px 24px;}
+
+/* ── ADD PANEL ── */
+.add-panel{background:var(--s1);border:1px solid var(--br);border-radius:var(--r);padding:22px;margin-bottom:20px;}
+.ap-top{display:grid;grid-template-columns:1fr 160px 160px;gap:14px;align-items:end;margin-bottom:16px;}
+.ap-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;}
+label.lbl{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txm);display:block;margin-bottom:5px;}
+input.fi,select.fi,textarea.fi{width:100%;background:var(--s2);border:1px solid var(--br);color:var(--tx);
+  font-family:var(--syne);font-size:13px;padding:9px 12px;border-radius:7px;transition:border-color .15s;resize:none;}
+input.fi:focus,select.fi:focus,textarea.fi:focus{outline:none;border-color:var(--gold);}
+.cats{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;}
+.cat-p{padding:4px 12px;border-radius:99px;border:1px solid var(--br);font-size:11px;cursor:pointer;
+  transition:all .15s;color:var(--txm);background:transparent;font-family:var(--syne);}
+.cat-p.on{font-weight:700;}
+.btn{background:var(--gold);color:#000;border:none;padding:10px 22px;border-radius:8px;
+  font-family:var(--syne);font-weight:700;font-size:13px;cursor:pointer;letter-spacing:.5px;
+  transition:all .2s;white-space:nowrap;}
+.btn:hover{opacity:.85;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-sm{padding:7px 16px;font-size:12px;}
+
+/* ── DAY STRIP ── */
+.day-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:18px;scrollbar-width:none;}
+.day-strip::-webkit-scrollbar{display:none;}
+.dcard{flex-shrink:0;width:54px;background:var(--s1);border:1px solid var(--br);border-radius:8px;
+  padding:8px 6px;text-align:center;cursor:pointer;transition:all .15s;}
+.dcard.on{border-color:var(--gold);background:rgba(245,166,35,.08);}
+.dcard.has-data{border-color:var(--br);position:relative;}
+.dcard.has-data::after{content:'';position:absolute;top:5px;right:5px;width:5px;height:5px;
+  border-radius:50%;background:var(--teal);}
+.dcard.on.has-data::after{background:var(--gold);}
+.dd{font-family:var(--mono);font-size:15px;font-weight:700;display:block;}
+.dm{font-size:9px;color:var(--txm);display:block;margin-top:1px;}
+.da{font-size:9px;color:var(--txd);font-family:var(--mono);display:block;margin-top:3px;}
+.dcard.on .dd{color:var(--gold);}
+
+/* ── ENTRIES ── */
+.sec-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.sec-title{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txm);}
+.sec-val{font-family:var(--mono);font-size:13px;font-weight:700;}
+.entry{display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--s1);
+  border:1px solid var(--br);border-radius:8px;margin-bottom:7px;transition:background .15s;}
+.entry:hover{background:var(--s2);}
+.e-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.e-cat{font-size:11px;color:var(--txm);width:86px;flex-shrink:0;}
+.e-card{font-size:10px;color:var(--txd);width:80px;flex-shrink:0;font-family:var(--mono);}
+.e-comment{font-size:12px;flex:1;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.e-time{font-size:10px;color:var(--txd);font-family:var(--mono);flex-shrink:0;}
+.e-amt{font-family:var(--mono);font-size:13px;font-weight:700;flex-shrink:0;width:78px;text-align:right;}
+.e-del{background:none;border:none;color:var(--txd);cursor:pointer;font-size:14px;padding:2px 6px;
+  border-radius:4px;transition:all .15s;flex-shrink:0;}
+.e-del:hover{color:var(--red);background:rgba(255,77,109,.1);}
+.empty{text-align:center;padding:40px;color:var(--txd);font-size:13px;}
+
+/* ── ANALYSIS ── */
+.an-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.an-panel{background:var(--s1);border:1px solid var(--br);border-radius:var(--r);padding:18px;}
+.an-title{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txm);margin-bottom:14px;}
+.arow{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+.adot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.aname{font-size:12px;color:var(--txm);width:100px;flex-shrink:0;}
+.abg{flex:1;height:4px;background:var(--s3);border-radius:99px;overflow:hidden;}
+.abar{height:100%;border-radius:99px;width:0;transition:width .8s cubic-bezier(.16,1,.3,1);}
+.aamt{font-family:var(--mono);font-size:12px;width:72px;text-align:right;flex-shrink:0;}
+.apct{font-size:10px;color:var(--txd);font-family:var(--mono);width:34px;text-align:right;flex-shrink:0;}
+
+/* ── DAY CHART ── */
+.chart-wrap{background:var(--s1);border:1px solid var(--br);border-radius:var(--r);padding:18px;margin-bottom:16px;}
+.chart-area{display:flex;align-items:flex-end;gap:3px;height:80px;overflow-x:auto;padding-bottom:4px;}
+.cbar-w{display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0;width:28px;cursor:pointer;}
+.cbar{width:22px;border-radius:3px 3px 0 0;min-height:2px;transition:opacity .15s;}
+.cbar-w:hover .cbar{opacity:.7;}
+.cbar-d{font-size:8px;color:var(--txd);font-family:var(--mono);}
+
+/* ── KPI ── */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+.kpi{background:var(--s1);border:1px solid var(--br);border-radius:var(--r);padding:14px 16px;}
+.kpi-lbl{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txm);display:block;margin-bottom:5px;}
+.kpi-val{font-family:var(--mono);font-size:20px;font-weight:700;}
+
+/* ── CONFIG ── */
+.cfg{background:var(--s1);border:1px solid var(--br);border-radius:var(--r);padding:22px;margin-bottom:20px;}
+.cfg-title{font-size:14px;font-weight:700;margin-bottom:6px;}
+.cfg-sub{font-size:12px;color:var(--txm);margin-bottom:18px;line-height:1.5;}
+.cfg-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px;}
+.cfg-note{font-size:11px;color:var(--txd);margin-top:10px;line-height:1.6;}
+.cfg-note a{color:var(--blue);text-decoration:none;}
+.tag{display:inline-block;padding:1px 8px;border-radius:99px;font-size:9px;font-weight:700;
+  background:rgba(79,172,254,.12);color:var(--blue);border:1px solid rgba(79,172,254,.2);}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--s1);border:1px solid var(--br);
+  border-radius:8px;padding:11px 18px;font-size:12px;z-index:9999;
+  animation:slidein .25s ease;pointer-events:none;}
+@keyframes slidein{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.toast.ok{border-color:rgba(0,212,168,.3);color:var(--teal);}
+.toast.err{border-color:rgba(255,77,109,.3);color:var(--red);}
+
+/* ── EXPORT ── */
+.export-box{background:var(--s2);border:1px solid var(--br);border-radius:8px;padding:14px;
+  font-family:var(--mono);font-size:11px;color:var(--txm);white-space:pre-wrap;max-height:300px;
+  overflow-y:auto;line-height:1.6;}
+
+@media(max-width:720px){
+  .ap-top{grid-template-columns:1fr 1fr;}
+  .an-grid{grid-template-columns:1fr;}
+  .kpi-row{grid-template-columns:1fr 1fr;}
+  .cfg-grid{grid-template-columns:1fr;}
+  .e-card,.e-time{display:none;}
+}
+@media(max-width:480px){.hdr-pills{display:none;}}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div class="logo">SPENT<span>·</span>YK</div>
+  <div class="hpill-wrap hdr-pills">
+    <button class="hpill on" id="tab-add" onclick="setTab('add')">ADD</button>
+    <button class="hpill" id="tab-daily" onclick="setTab('daily')">DAILY</button>
+    <button class="hpill" id="tab-analysis" onclick="setTab('analysis')">ANALYSIS</button>
+    <button class="hpill" id="tab-export" onclick="setTab('export')">EXPORT</button>
+  </div>
+  <div class="hdr-r">
+    <span id="sync-status" style="font-size:11px;color:var(--txm)"><span class="sync-dot" id="sd"></span><span id="st">—</span></span>
+    <button class="hico" onclick="setTab('config')">⚙</button>
+    <button class="hico" onclick="doSync()">↑ Sync</button>
+  </div>
+</header>
+
+<div class="main" id="main"></div>
+<script>
+// ── CATS & CARDS ───────────────────────────────────────
+const CATS=['Pets','Home','Electronics','Telecom','Transport','EMI','Travel','Dining','Health','Insurance','Jewellery','Investment','UPI/Cash','Fuel','Groceries','Misc'];
+const CC={Pets:'#f97316',Home:'#8b5cf6',Electronics:'#06b6d4',Telecom:'#84cc16',
+  Transport:'#f59e0b',EMI:'#ec4899',Travel:'#3b82f6',Dining:'#ef4444',
+  Health:'#10b981',Insurance:'#6366f1',Jewellery:'#fbbf24',Investment:'#00d4a8',
+  'UPI/Cash':'#94a3b8',Fuel:'#fb923c',Groceries:'#a3e635',Misc:'#6b7280'};
+const COLS=['#f5a623','#4facfe','#00d4a8','#ff4d6d','#a78bfa','#ffd166','#fb923c','#4ade80'];
+const MNS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const FULLM=['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// ── ✏ EDIT THESE ONCE — your GitHub details ───────────
+const DEFAULTS={
+  owner : 'YOUR_GITHUB_USERNAME',   // e.g. 'yashwanth123'
+  repo  : 'YOUR_REPO_NAME',         // e.g. 'my-finances'
+  token : 'YOUR_PAT_TOKEN',         // e.g. 'ghp_xxxxxxxxxxxx'
+  branch: 'main',
+  path  : 'expenses'                // folder inside repo
+};
+// ─────────────────────────────────────────────────────
+
+// ── STATE ─────────────────────────────────────────────
+const _saved=JSON.parse(localStorage.getItem('spent_cfg')||'{}')\;
+// Saved values take priority; DEFAULTS are fallback
+let CFG={
+  owner : _saved.owner  || DEFAULTS.owner,
+  repo  : _saved.repo   || DEFAULTS.repo,
+  token : _saved.token  || DEFAULTS.token,
+  branch: _saved.branch || DEFAULTS.branch,
+  path  : _saved.path   || DEFAULTS.path,
+};
+let CACHE=JSON.parse(localStorage.getItem('spent_cache')||'{}'); // {YYYY-MM:[entries]}
+let selCat='';let selCard='';let curTab='add';
+let viewDate=todayStr();let viewMonth=viewDate.slice(0,7);
+let syncing=false;
+
+function todayStr(){const d=new Date();return `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;}
+function p2(n){return String(n).padStart(2,'0');}
+const fmt=n=>'₹'+Number(n).toLocaleString('en-IN');
+const fmtK=n=>n>=100000?'₹'+(n/100000).toFixed(1)+'L':n>=1000?'₹'+(n/1000).toFixed(1)+'k':'₹'+n;
+function getCards(){return JSON.parse(localStorage.getItem('spent_cards')||'["ICICI Rupay","OneCard","Axis Indian Oil","Axis Flipkart","Cash","UPI"]');}
+function saveCards(c){localStorage.setItem('spent_cards',JSON.stringify(c));}
+function monthEntries(mo){return CACHE[mo]||[];}
+function allEntries(){return Object.values(CACHE).flat();}
+function saveCacheLocal(){localStorage.setItem('spent_cache',JSON.stringify(CACHE));}
+function saveCfg(){localStorage.setItem('spent_cfg',JSON.stringify(CFG));}
+function cfgOk(){return CFG.owner&&CFG.repo&&CFG.token;}
+function setSync(state,msg){
+  const sd=document.getElementById('sd'),st=document.getElementById('st');
+  if(!sd||!st)return;
+  sd.className='sync-dot '+state;st.textContent=msg;
+}
+
+// ── TABS ──────────────────────────────────────────────
+function setTab(t){
+  curTab=t;
+  document.querySelectorAll('.hpill').forEach(p=>p.classList.remove('on'));
+  const el=document.getElementById('tab-'+t);if(el)el.classList.add('on');
+  render();
+}
+
+// ── GITHUB ────────────────────────────────────────────
+async function ghGet(path){
+  const r=await fetch(`https://api.github.com/repos/${CFG.owner}/${CFG.repo}/contents/${path}`,{
+    headers:{'Authorization':`token ${CFG.token}`,'Accept':'application/vnd.github.v3+json'}
+  });
+  if(r.status===404)return null;
+  if(!r.ok)throw new Error(`GH ${r.status}`);
+  return r.json();
+}
+
+async function ghPut(path,content,sha){
+  const body={message:`expense update ${new Date().toISOString().slice(0,10)}`,
+    content:btoa(unescape(encodeURIComponent(content))),branch:CFG.branch||'main'};
+  if(sha)body.sha=sha;
+  const r=await fetch(`https://api.github.com/repos/${CFG.owner}/${CFG.repo}/contents/${path}`,{
+    method:'PUT',headers:{'Authorization':`token ${CFG.token}`,'Content-Type':'application/json',
+      'Accept':'application/vnd.github.v3+json'},body:JSON.stringify(body)
+  });
+  if(!r.ok){const e=await r.json();throw new Error(e.message||`GH ${r.status}`);}
+  return r.json();
+}
+
+function ghPath(mo){return `${(CFG.path||'expenses').replace(/\/$/,'')}/expenses-${mo}.json`;}
+
+async function syncMonth(mo){
+  if(!cfgOk())return;
+  setSync('ing','syncing…');syncing=true;
+  try{
+    const path=ghPath(mo);
+    const existing=await ghGet(path);
+    const localData=CACHE[mo]||[];
+    if(existing){
+      // merge: remote is source of truth, local additions go on top
+      const remote=JSON.parse(decodeURIComponent(escape(atob(existing.content.replace(/\n/g,'')))));
+      const remoteIds=new Set(remote.map(e=>e.id));
+      const merged=[...remote,...localData.filter(e=>!remoteIds.has(e.id))];
+      merged.sort((a,b)=>a.ts-b.ts);
+      CACHE[mo]=merged;saveCacheLocal();
+      await ghPut(path,JSON.stringify(merged,null,2),existing.sha);
+    } else {
+      await ghPut(path,JSON.stringify(localData,null,2));
+    }
+    setSync('ok','synced');toast('Synced ✓','ok');
+  }catch(e){setSync('err','error');toast('Sync failed: '+e.message,'err');}
+  syncing=false;render();
+}
+
+async function loadMonth(mo){
+  if(!cfgOk())return;
+  setSync('ing','loading…');
+  try{
+    const existing=await ghGet(ghPath(mo));
+    if(existing){
+      const data=JSON.parse(decodeURIComponent(escape(atob(existing.content.replace(/\n/g,'')))));
+      CACHE[mo]=data;saveCacheLocal();
+    }
+    setSync('ok','synced');
+  }catch(e){setSync('err','error');}
+  render();
+}
+
+async function doSync(){
+  const mo=viewMonth;
+  await syncMonth(mo);
+}
+
+// ── ADD ENTRY ─────────────────────────────────────────
+function addEntry(){
+  const amt=parseFloat(document.getElementById('amt')?.value||0);
+  const comment=(document.getElementById('comment')?.value||'').trim();
+  const card=document.getElementById('card-sel')?.value||'';
+  const dateVal=document.getElementById('entry-date')?.value||todayStr();
+  if(!selCat){toast('Pick a category','err');return;}
+  if(!amt||amt<=0){toast('Enter amount','err');return;}
+  if(!card){toast('Select card','err');return;}
+  const entry={id:Date.now()+'_'+Math.random().toString(36).slice(2),
+    date:dateVal,cat:selCat,card,amount:amt,comment,ts:Date.now()};
+  const mo=dateVal.slice(0,7);
+  if(!CACHE[mo])CACHE[mo]=[];
+  CACHE[mo].push(entry);
+  saveCacheLocal();
+  // reset
+  document.getElementById('amt').value='';
+  document.getElementById('comment').value='';
+  toast('Saved ✓','ok');
+  viewDate=dateVal;viewMonth=mo;
+  render();
+  // auto-sync if configured
+  if(cfgOk())syncMonth(mo);
+}
+
+// ── DELETE ────────────────────────────────────────────
+function delEntry(id){
+  const mo=Object.keys(CACHE).find(m=>CACHE[m].some(e=>e.id===id));
+  if(!mo)return;
+  CACHE[mo]=CACHE[mo].filter(e=>e.id!==id);
+  saveCacheLocal();
+  render();
+  if(cfgOk())syncMonth(mo);
+}
+
+// ── RENDER ────────────────────────────────────────────
+function render(){
+  const main=document.getElementById('main');
+  if(curTab==='add')main.innerHTML=renderAdd();
+  else if(curTab==='daily')main.innerHTML=renderDaily();
+  else if(curTab==='analysis')main.innerHTML=renderAnalysis();
+  else if(curTab==='export')main.innerHTML=renderExport();
+  else if(curTab==='config')main.innerHTML=renderConfig();
+  animateBars();
+}
+
+// ── ADD TAB ───────────────────────────────────────────
+function renderAdd(){
+  const cards=getCards();
+  const today=todayStr();
+  const todayEntries=(CACHE[today.slice(0,7)]||[]).filter(e=>e.date===today);
+  const todayTotal=todayEntries.reduce((s,e)=>s+e.amount,0);
+
+  const catPills=CATS.map(c=>`<button class="cat-p${selCat===c?' on':''}" 
+    style="${selCat===c?`background:${CC[c]}22;color:${CC[c]};border-color:${CC[c]}55`:''}"
+    onclick="selCat='${c}';render()">${c}</button>`).join('');
+
+  const cardOpts=cards.map(c=>`<option value="${c}"${selCard===c?' selected':''}>${c}</option>`).join('');
+
+  const recentH=todayEntries.length===0
+    ?`<div class="empty">No entries today yet</div>`
+    :[...todayEntries].reverse().map(e=>entryRow(e)).join('');
+
+  return `
+    <div class="add-panel">
+      <div style="margin-bottom:12px"><label class="lbl">Category</label><div class="cats">${catPills}</div></div>
+      <div class="ap-top">
+        <div>
+          <label class="lbl">Amount (₹)</label>
+          <input class="fi" type="number" id="amt" placeholder="0" min="0" step="0.01"
+            onkeydown="if(event.key==='Enter')addEntry()">
+        </div>
+        <div>
+          <label class="lbl">Card / Payment</label>
+          <select class="fi" id="card-sel" onchange="selCard=this.value">${cardOpts}</select>
+        </div>
+        <div>
+          <label class="lbl">Date</label>
+          <input class="fi" type="date" id="entry-date" value="${today}">
+        </div>
+      </div>
+      <div class="ap-row">
+        <div><label class="lbl">Comment (optional)</label>
+          <input class="fi" id="comment" placeholder="What was this for?" 
+            onkeydown="if(event.key==='Enter')addEntry()"></div>
+        <div style="padding-top:20px"><button class="btn" onclick="addEntry()">+ Save</button></div>
+      </div>
+    </div>
+    <div class="sec-hdr">
+      <span class="sec-title">Today · ${new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'short'})}</span>
+      <span class="sec-val" style="color:var(--red)">${fmt(todayTotal)}</span>
+    </div>
+    ${recentH}
+  `;
+}
+
+// ── DAILY TAB ─────────────────────────────────────────
+function renderDaily(){
+  // Build day strip for current month
+  const [y,m]=viewMonth.split('-').map(Number);
+  const daysInMonth=new Date(y,m,0).getDate();
+  const today=todayStr();
+  const mo=viewMonth;
+  const entries=monthEntries(mo);
+
+  // day → total map
+  const dayTots={};
+  entries.forEach(e=>{dayTots[e.date]=(dayTots[e.date]||0)+e.amount;});
+
+  const dayCards=Array.from({length:daysInMonth},(_,i)=>{
+    const d=p2(i+1);const ds=`${viewMonth}-${d}`;
+    const dn=new Date(y,m-1,i+1);
+    const dayName=['Su','Mo','Tu','We','Th','Fr','Sa'][dn.getDay()];
+    const hasData=!!dayTots[ds];
+    const isOn=viewDate===ds;
+    const isToday=ds===today;
+    return `<div class="dcard${isOn?' on':''}${hasData?' has-data':''}" onclick="viewDate='${ds}';render()">
+      <span class="dd" style="${isToday?'color:var(--gold)':''}">${d}</span>
+      <span class="dm">${dayName}</span>
+      <span class="da">${hasData?fmtK(dayTots[ds]):''}</span>
+    </div>`;
+  }).join('');
+
+  // nav
+  const prev=()=>{const d=new Date(y,m-2,1);return`${d.getFullYear()}-${p2(d.getMonth()+1)}`;};
+  const next=()=>{const d=new Date(y,m,1);return`${d.getFullYear()}-${p2(d.getMonth()+1)}`;};
+
+  const dayEntries=entries.filter(e=>e.date===viewDate);
+  const dayTotal=dayEntries.reduce((s,e)=>s+e.amount,0);
+  const monthTotal=entries.reduce((s,e)=>s+e.amount,0);
+
+  const dayH=dayEntries.length===0
+    ?`<div class="empty">No entries for ${viewDate}</div>`
+    :[...dayEntries].reverse().map(e=>entryRow(e)).join('');
+
+  return `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <button class="hico" onclick="viewMonth='${prev()}';viewDate='${prev()}-01';render()">← Prev</button>
+      <span style="font-family:var(--mono);font-weight:700">${FULLM[m-1]} ${y}</span>
+      <div style="display:flex;gap:8px">
+        <button class="hico" onclick="loadMonth('${viewMonth}')">↓ Load</button>
+        <button class="hico" onclick="viewMonth='${next()}';viewDate='${next()}-01';render()">Next →</button>
+      </div>
+    </div>
+    <div class="day-strip">${dayCards}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div class="kpi"><span class="kpi-lbl">Day Total</span><span class="kpi-val" style="color:var(--red)">${fmt(dayTotal)}</span></div>
+      <div class="kpi"><span class="kpi-lbl">Month Total</span><span class="kpi-val" style="color:var(--orange)">${fmt(monthTotal)}</span></div>
+    </div>
+    <div class="sec-hdr">
+      <span class="sec-title">${viewDate}</span>
+      <span class="sec-val" style="color:var(--red)">${dayEntries.length} entries</span>
+    </div>
+    ${dayH}
+  `;
+}
+
+// ── ANALYSIS TAB ──────────────────────────────────────
+function renderAnalysis(){
+  const [y,m]=viewMonth.split('-').map(Number);
+  const prev=()=>{const d=new Date(y,m-2,1);return`${d.getFullYear()}-${p2(d.getMonth()+1)}`;};
+  const next=()=>{const d=new Date(y,m,1);return`${d.getFullYear()}-${p2(d.getMonth()+1)}`;};
+  const entries=monthEntries(viewMonth);
+  const total=entries.reduce((s,e)=>s+e.amount,0);
+  const avgDay=total&&entries.length?(total/(new Set(entries.map(e=>e.date)).size)).toFixed(0):0;
+  const maxDay=()=>{const d={};entries.forEach(e=>{d[e.date]=(d[e.date]||0)+e.amount;});const mx=Math.max(...Object.values(d)||[0]);return fmt(mx);};
+
+  // cat breakdown
+  const catMap={};entries.forEach(e=>{catMap[e.cat]=(catMap[e.cat]||0)+e.amount;});
+  const catArr=Object.entries(catMap).sort((a,b)=>b[1]-a[1]);
+  const catMx=catArr[0]?.[1]||1;
+  const catH=catArr.map(([cat,amt],i)=>`<div class="arow">
+    <div class="adot" style="background:${CC[cat]||'#888'}"></div>
+    <div class="aname">${cat}</div>
+    <div class="abg"><div class="abar" id="ab${i}" style="background:${CC[cat]||'#888'}"></div></div>
+    <div class="aamt">${fmt(amt)}</div>
+    <div class="apct">${total?(amt/total*100).toFixed(1):0}%</div>
+  </div>`).join('');
+  const catW=catArr.map(([,amt],i)=>`document.getElementById('ab${i}')&&(document.getElementById('ab${i}').style.width='${(amt/catMx*100).toFixed(1)}%')`).join(';');
+  window._catW=catW;
+
+  // card breakdown
+  const cardMap={};entries.forEach(e=>{cardMap[e.card]=(cardMap[e.card]||0)+e.amount;});
+  const cardArr=Object.entries(cardMap).sort((a,b)=>b[1]-a[1]);
+  const cardMx=cardArr[0]?.[1]||1;
+  const cardH=cardArr.map(([card,amt],i)=>`<div class="arow">
+    <div class="adot" style="background:${COLS[i%COLS.length]}"></div>
+    <div class="aname">${card}</div>
+    <div class="abg"><div class="abar" id="cb${i}" style="background:${COLS[i%COLS.length]}"></div></div>
+    <div class="aamt">${fmt(amt)}</div>
+    <div class="apct">${total?(amt/total*100).toFixed(1):0}%</div>
+  </div>`).join('');
+  const cardW=cardArr.map(([,amt],i)=>`document.getElementById('cb${i}')&&(document.getElementById('cb${i}').style.width='${(amt/cardMx*100).toFixed(1)}%')`).join(';');
+  window._cardW=cardW;
+
+  // day chart
+  const [,mo]=viewMonth.split('-').map(Number);
+  const daysInMonth=new Date(y,mo,0).getDate();
+  const dayMap={};entries.forEach(e=>{dayMap[e.date]=(dayMap[e.date]||0)+e.amount;});
+  const dayAmts=Array.from({length:daysInMonth},(_,i)=>{
+    const ds=`${viewMonth}-${p2(i+1)}`;return{d:p2(i+1),v:dayMap[ds]||0};});
+  const dayMx=Math.max(...dayAmts.map(d=>d.v),1);
+  const chartH=dayAmts.map(d=>{
+    const h=Math.max(2,Math.round((d.v/dayMx)*68));
+    const col=d.v>avgDay*1.5?'var(--red)':d.v>0?'var(--teal)':'var(--s3)';
+    return `<div class="cbar-w" onclick="viewDate='${viewMonth}-${d.d}';setTab('daily')">
+      <div class="cbar" style="height:${h}px;background:${col}" title="${fmt(d.v)}"></div>
+      <span class="cbar-d">${d.d}</span>
+    </div>`;}).join('');
+
+  // top expenses
+  const top=[...entries].sort((a,b)=>b.amount-a.amount).slice(0,5);
+  const topH=top.map(e=>`<div class="entry" style="cursor:default">
+    <div class="e-dot" style="background:${CC[e.cat]||'#888'}"></div>
+    <div class="e-cat">${e.cat}</div>
+    <div class="e-card">${e.card}</div>
+    <div class="e-comment">${e.comment||'—'}</div>
+    <div class="e-time">${e.date}</div>
+    <div class="e-amt">${fmt(e.amount)}</div>
+  </div>`).join('');
+
+  return `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <button class="hico" onclick="viewMonth='${prev()}';render()">← Prev</button>
+      <span style="font-family:var(--mono);font-weight:700">${FULLM[m-1]} ${y} Analysis</span>
+      <div style="display:flex;gap:8px">
+        <button class="hico" onclick="loadMonth('${viewMonth}')">↓ Load</button>
+        <button class="hico" onclick="viewMonth='${next()}';render()">Next →</button>
+      </div>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi"><span class="kpi-lbl">Total Spent</span><span class="kpi-val" style="color:var(--red)">${fmt(total)}</span></div>
+      <div class="kpi"><span class="kpi-lbl">Transactions</span><span class="kpi-val" style="color:var(--blue)">${entries.length}</span></div>
+      <div class="kpi"><span class="kpi-lbl">Avg / Active Day</span><span class="kpi-val" style="color:var(--yellow)">${fmt(+avgDay)}</span></div>
+      <div class="kpi"><span class="kpi-lbl">Peak Day</span><span class="kpi-val" style="color:var(--orange)">${maxDay()}</span></div>
+    </div>
+    <div class="chart-wrap">
+      <div class="an-title">Daily Spend — ${FULLM[m-1]} ${y}</div>
+      <div class="chart-area">${chartH}</div>
+    </div>
+    <div class="an-grid">
+      <div class="an-panel"><div class="an-title">By Category</div>${catH||'<div class="empty">No data</div>'}</div>
+      <div class="an-panel"><div class="an-title">By Card</div>${cardH||'<div class="empty">No data</div>'}</div>
+    </div>
+    ${top.length?`<div style="margin-bottom:6px"><div class="sec-hdr"><span class="sec-title">Top Expenses</span></div>${topH}</div>`:''}
+  `;
+}
+
+// ── EXPORT TAB ────────────────────────────────────────
+function renderExport(){
+  const entries=monthEntries(viewMonth);
+  const csv=['Date,Category,Card,Amount,Comment',...entries.map(e=>`${e.date},${e.cat},${e.card},${e.amount},"${(e.comment||'').replace(/"/g,'""')}"`)].join('\n');
+  // Ledger-compatible format
+  const ledgerLines=entries.map(e=>`${e.date} | ${e.card} | ${e.desc||e.cat} | ${e.amount} | ${e.cat}`).join('\n');
+  return `
+    <div style="margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">
+      <span style="font-family:var(--mono);font-weight:700">${viewMonth} Export</span>
+      <div style="display:flex;gap:8px">
+        <button class="hico" onclick="copyCsv()">Copy CSV</button>
+        <button class="hico" onclick="dlCsv()">↓ Download CSV</button>
+      </div>
+    </div>
+    <div class="an-panel" style="background:var(--s1);border:1px solid var(--br);border-radius:var(--r);padding:18px;margin-bottom:14px">
+      <div class="an-title" style="margin-bottom:10px">LEDGER·YK Import Format <span class="tag">paste into Import tab</span></div>
+      <div class="export-box" id="ledger-exp">=== LEDGER MONTHLY ENTRY ===
+MONTH: ${FULLM[+viewMonth.split('-')[1]-1]} ${viewMonth.split('-')[0]}
+
+SALARY: 0
+
+${[...new Set(entries.map(e=>e.card))].map(card=>{
+  const cardEntries=entries.filter(e=>e.card===card);
+  const total=cardEntries.reduce((s,e)=>s+e.amount,0);
+  return `--- CARD: ${card} | TOTAL: ${total} ---\n${cardEntries.map(e=>`${e.comment||e.cat} | ${e.amount} | ${e.cat}`).join('\n')}`;
+}).join('\n\n')}
+
+--- INVESTMENTS ---
+PPF | 0 | pending
+SIP (Mutual Fund) | 0 | pending</div>
+      <button class="hico" style="margin-top:10px" onclick="copyLedger()">Copy</button>
+    </div>
+    <div class="an-panel" style="background:var(--s1);border:1px solid var(--br);border-radius:var(--r);padding:18px">
+      <div class="an-title" style="margin-bottom:10px">Raw JSON (${entries.length} entries)</div>
+      <div class="export-box">${JSON.stringify(entries,null,2)}</div>
+    </div>
+    <textarea id="csv-hidden" style="position:absolute;left:-9999px">${csv}</textarea>
+  `;
+}
+
+function copyCsv(){navigator.clipboard.writeText(document.getElementById('csv-hidden')?.value||'').then(()=>toast('CSV copied','ok'));}
+function copyLedger(){navigator.clipboard.writeText(document.getElementById('ledger-exp')?.textContent||'').then(()=>toast('Copied','ok'));}
+function dlCsv(){
+  const entries=monthEntries(viewMonth);
+  const csv=['Date,Category,Card,Amount,Comment',...entries.map(e=>`${e.date},${e.cat},${e.card},${e.amount},"${(e.comment||'').replace(/"/g,'""')}"`)].join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=`expenses-${viewMonth}.csv`;a.click();
+}
+
+// ── CONFIG TAB ────────────────────────────────────────
+function renderConfig(){
+  const cards=getCards();
+  return `
+    <div class="cfg">
+      <div class="cfg-title">GitHub Storage Config</div>
+      <div class="cfg-sub">Expenses saved as JSON files in your GitHub repo. One file per month: <code style="color:var(--gold)">expenses/expenses-YYYY-MM.json</code></div>
+      <div class="cfg-grid">
+        <div><label class="lbl">GitHub Username</label><input class="fi" id="cfg-owner" value="${CFG.owner}" placeholder="your-username"></div>
+        <div><label class="lbl">Repository Name</label><input class="fi" id="cfg-repo" value="${CFG.repo}" placeholder="my-finances"></div>
+        <div><label class="lbl">Branch</label><input class="fi" id="cfg-branch" value="${CFG.branch||'main'}" placeholder="main"></div>
+      </div>
+      <div><label class="lbl">Personal Access Token (PAT)</label>
+        <input class="fi" id="cfg-token" type="password" value="${CFG.token}" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off"></div>
+      <div style="margin-top:8px"><label class="lbl">Folder Path (optional)</label>
+        <input class="fi" id="cfg-path" value="${CFG.path||'expenses'}" placeholder="expenses"></div>
+      <div class="cfg-note">
+        Create a PAT at <a href="https://github.com/settings/tokens" target="_blank">github.com/settings/tokens</a> → 
+        "Generate new token (classic)" → tick <strong>repo</strong> scope. Stored locally in your browser only.
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="btn btn-sm" onclick="saveCfgForm()">Save Config</button>
+        <button class="hico" onclick="testGh()">Test Connection</button>
+      </div>
+    </div>
+    <div class="cfg" style="margin-bottom:0">
+      <div class="cfg-title">Cards / Payment Methods</div>
+      <div id="cards-list" style="margin-bottom:12px">${cards.map((c,i)=>`<div style="display:flex;gap:8px;margin-bottom:7px">
+        <input class="fi" value="${c}" id="card-${i}" style="max-width:260px">
+        <button class="hico" onclick="rmCard(${i})">×</button>
+      </div>`).join('')}</div>
+      <button class="hico" onclick="addCardInput()">+ Add Card</button>
+      <div style="margin-top:14px"><button class="btn btn-sm" onclick="saveCardsForm()">Save Cards</button></div>
+    </div>
+  `;
+}
+
+function saveCfgForm(){
+  CFG.owner=document.getElementById('cfg-owner')?.value.trim()||'';
+  CFG.repo=document.getElementById('cfg-repo')?.value.trim()||'';
+  CFG.token=document.getElementById('cfg-token')?.value.trim()||'';
+  CFG.branch=document.getElementById('cfg-branch')?.value.trim()||'main';
+  CFG.path=document.getElementById('cfg-path')?.value.trim()||'expenses';
+  saveCfg();toast('Config saved ✓','ok');
+}
+
+async function testGh(){
+  saveCfgForm();
+  if(!cfgOk()){toast('Fill all fields first','err');return;}
+  try{
+    const r=await fetch(`https://api.github.com/repos/${CFG.owner}/${CFG.repo}`,{
+      headers:{'Authorization':`token ${CFG.token}`}});
+    if(r.ok){toast('✓ Connected to '+CFG.repo,'ok');}
+    else throw new Error((await r.json()).message);
+  }catch(e){toast('Error: '+e.message,'err');}
+}
+
+function addCardInput(){
+  const list=document.getElementById('cards-list');
+  const idx=list.querySelectorAll('input').length;
+  const div=document.createElement('div');
+  div.style.cssText='display:flex;gap:8px;margin-bottom:7px';
+  div.innerHTML=`<input class="fi" id="card-${idx}" style="max-width:260px" placeholder="Card name"><button class="hico" onclick="this.parentElement.remove()">×</button>`;
+  list.appendChild(div);
+}
+
+function rmCard(i){document.getElementById('card-'+i)?.closest('div')?.remove();}
+function saveCardsForm(){
+  const inputs=document.querySelectorAll('#cards-list input');
+  const cards=[...inputs].map(i=>i.value.trim()).filter(Boolean);
+  saveCards(cards);toast('Cards saved ✓','ok');
+}
+
+// ── ENTRY ROW ─────────────────────────────────────────
+function entryRow(e){
+  const t=new Date(e.ts);
+  const time=`${p2(t.getHours())}:${p2(t.getMinutes())}`;
+  return `<div class="entry">
+    <div class="e-dot" style="background:${CC[e.cat]||'#888'}"></div>
+    <div class="e-cat">${e.cat}</div>
+    <div class="e-card">${e.card}</div>
+    <div class="e-comment">${e.comment||'<span style="color:var(--txd)">—</span>'}</div>
+    <div class="e-time">${time}</div>
+    <div class="e-amt" style="color:var(--red)">${fmt(e.amount)}</div>
+    <button class="e-del" onclick="delEntry('${e.id}')">×</button>
+  </div>`;
+}
+
+// ── TOAST ─────────────────────────────────────────────
+let _toast=null;
+function toast(msg,type='ok'){
+  if(_toast){_toast.remove();}
+  const d=document.createElement('div');
+  d.className='toast '+type;d.textContent=msg;
+  document.body.appendChild(d);_toast=d;
+  setTimeout(()=>{d.remove();if(_toast===d)_toast=null;},2500);
+}
+
+// ── ANIMATE BARS ──────────────────────────────────────
+function animateBars(){
+  setTimeout(()=>{
+    try{if(window._catW)eval(window._catW);}catch(e){}
+    try{if(window._cardW)eval(window._cardW);}catch(e){}
+  },60);
+}
+
+// ── INIT ──────────────────────────────────────────────
+if(!cfgOk()){
+  // Show config hint on first load but still show add tab
+}
+// init selCard to first card
+selCard=getCards()[0]||'';
+render();
+if(cfgOk())loadMonth(viewMonth);
+</script>
+</body>
+</html>
