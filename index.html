@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>YK · Enterprise Expense Tracker</title>
+<title>Spent · Enterprise Expense Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
@@ -106,6 +106,7 @@ body {
 .toast.success {border-color: var(--success); color: var(--success);}
 .toast.error {border-color: var(--danger); color: var(--danger);}
 @keyframes slideIn {from {transform: translateY(20px); opacity: 0;} to {transform: translateY(0); opacity: 1;}}
+.ledger-box {background: var(--bg-secondary); border: 2px solid var(--border-light); border-radius: 12px; padding: 20px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; margin-bottom: 16px; color: var(--text-primary); overflow-x: auto; word-break: break-word;}
 .mobile-nav {display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-elevated); border-top: 1px solid var(--border-light); padding: 8px 0; box-shadow: 0 -4px 12px rgba(0,0,0,0.1); z-index: 1000;}
 .mobile-nav-items {display: flex; justify-content: space-around;}
 .mobile-nav-item {display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 16px; border: none; background: transparent; cursor: pointer; color: var(--text-tertiary); font-size: 11px; font-weight: 500;}
@@ -116,10 +117,37 @@ body {
 .month-nav-buttons {display: flex; gap: 8px;}
 @media (max-width: 768px) {
   .sidebar {display: none;}
-  .top-bar {padding: 0 16px;}
-  .content-area {padding: 16px; padding-bottom: 80px;}
-  .stat-grid {grid-template-columns: repeat(2, 1fr);}
+  .top-bar {padding: 0 12px; height: 64px;}
+  .page-title {font-size: 18px;}
+  .content-area {padding: 12px; padding-bottom: 80px;}
+  .stat-grid {grid-template-columns: 1fr 1fr; gap: 10px;}
+  .stat-card {padding: 16px;}
+  .stat-value {font-size: 24px;}
+  .stat-label {font-size: 11px;}
+  .stat-change {font-size: 12px;}
+  .dashboard-grid {grid-template-columns: 1fr; gap: 16px;}
+  .widget {padding: 16px;}
+  .widget[style*="grid-column"] {grid-column: 1 !important;}
+  .chart-container {height: 220px;}
+  .transaction-item {gap: 12px; padding: 12px;}
+  .transaction-icon {width: 36px; height: 36px; font-size: 16px;}
+  .transaction-amount {font-size: 14px;}
+  .month-nav {flex-direction: column; gap: 12px; align-items: stretch;}
+  .month-nav-buttons {width: 100%; justify-content: space-between;}
+  .month-nav-buttons .btn {flex: 1;}
+  .top-actions {gap: 8px;}
+  .sync-status {display: none;}
+  .btn {padding: 8px 16px; font-size: 13px;}
   .mobile-nav {display: block;}
+  .form-input, .form-select {font-size: 16px;}
+  .category-grid {grid-template-columns: repeat(3, 1fr);}
+  .modal {padding: 24px;}
+  .modal-title {font-size: 20px;}
+}
+@media (max-width: 380px) {
+  .stat-grid {grid-template-columns: 1fr; gap: 8px;}
+  .category-grid {grid-template-columns: repeat(2, 1fr);}
+  .top-bar {padding: 0 8px;}
 }
 </style>
 </head>
@@ -127,7 +155,7 @@ body {
 <div class="app-container">
   <aside class="sidebar">
     <div class="sidebar-header">
-      <div class="logo">YK</div>
+      <div class="logo">SPENT</div>
       <div class="logo-subtitle">Expense Tracker</div>
     </div>
     <nav class="nav">
@@ -288,7 +316,7 @@ ${cards.map(card=>{const ce=e.filter(x=>x.card===card);const t=ce.reduce((s,x)=>
 
 --- INVESTMENTS ---
 PPF | 0 | pending
-SIP (Mutual Fund) | 0 | pending`;return`<div class="widget"><div class="widget-header"><div class="widget-title">LEDGER·YK Import Format</div><div class="widget-action" style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Paste into Import tab</div></div><div style="background:var(--bg-secondary);border:2px solid var(--border-light);border-radius:12px;padding:20px;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.6;white-space:pre-wrap;margin-bottom:16px;color:var(--text-primary)" id="ledgerBox">${ledgerText}</div><button class="btn btn-primary" onclick="navigator.clipboard.writeText(document.getElementById('ledgerBox').textContent).then(()=>toast('Ledger format copied','success'))">Copy Ledger Format</button></div><div class="widget"><div class="widget-header"><div class="widget-title">CSV Export</div></div><div style="display:flex;gap:12px;margin-top:20px"><button class="btn btn-secondary" onclick="navigator.clipboard.writeText(\`${csv.replace(/`/g,'\\`')}\`).then(()=>toast('CSV copied','success'))">Copy CSV</button><button class="btn btn-secondary" onclick="const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(\`${csv.replace(/`/g,'\\`')}\`);a.download='expenses-${currentMonth}.csv';a.click()">Download CSV</button></div></div><div class="widget"><div class="widget-header"><div class="widget-title">Raw JSON</div><div class="widget-action">${e.length} entries</div></div><div style="background:var(--bg-secondary);border:2px solid var(--border-light);border-radius:12px;padding:20px;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.5;overflow-x:auto;max-height:400px;overflow-y:auto;color:var(--text-primary)">${JSON.stringify(e,null,2)}</div></div>`;}
+SIP (Mutual Fund) | 0 | pending`;return`<div class="widget"><div class="widget-header"><div class="widget-title">LEDGER·YK Import Format</div><div class="widget-action" style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Paste into Import tab</div></div><div class="ledger-box" id="ledgerBox">${ledgerText}</div><button class="btn btn-primary" onclick="navigator.clipboard.writeText(document.getElementById('ledgerBox').textContent).then(()=>toast('Ledger format copied','success'))">Copy Ledger Format</button></div><div class="widget"><div class="widget-header"><div class="widget-title">CSV Export</div></div><div style="display:flex;gap:12px;margin-top:20px;flex-wrap:wrap"><button class="btn btn-secondary" onclick="navigator.clipboard.writeText(\`${csv.replace(/`/g,'\\`')}\`).then(()=>toast('CSV copied','success'))">Copy CSV</button><button class="btn btn-secondary" onclick="const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(\`${csv.replace(/`/g,'\\`')}\`);a.download='expenses-${currentMonth}.csv';a.click()">Download CSV</button></div></div><div class="widget"><div class="widget-header"><div class="widget-title">Raw JSON</div><div class="widget-action">${e.length} entries</div></div><div class="ledger-box" style="max-height:300px;font-size:11px">${JSON.stringify(e,null,2)}</div></div>`;}
 let charts={};
 function initDashboardCharts(){if(typeof Chart==='undefined')return;const e=CACHE[currentMonth]||[];const trendCtx=document.getElementById('trendChart');if(trendCtx){const days=Array.from({length:30},(_,i)=>i+1);const dayTotals={};e.forEach(x=>{const d=parseInt(x.date.split('-')[2]);dayTotals[d]=(dayTotals[d]||0)+x.amount;});if(charts.trend)charts.trend.destroy();charts.trend=new Chart(trendCtx,{type:'line',data:{labels:days,datasets:[{label:'Daily Spending',data:days.map(d=>dayTotals[d]||0),borderColor:'rgb(29,155,240)',backgroundColor:'rgba(29,155,240,0.1)',fill:true,tension:0.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'₹'+v.toLocaleString()}}}}});}const catCtx=document.getElementById('categoryChart');if(catCtx){const catTotals={};e.forEach(x=>{catTotals[x.cat]=(catTotals[x.cat]||0)+x.amount;});const sortedCats=Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).slice(0,5);if(charts.category)charts.category.destroy();charts.category=new Chart(catCtx,{type:'doughnut',data:{labels:sortedCats.map(c=>c[0]),datasets:[{data:sortedCats.map(c=>c[1]),backgroundColor:['rgb(29,155,240)','rgb(120,86,255)','rgb(255,107,157)','rgb(0,186,136)','rgb(255,169,77)']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});}}
 function initAnalyticsCharts(){if(typeof Chart==='undefined')return;const months=Object.keys(CACHE).sort().slice(-6);const monthlyCtx=document.getElementById('monthlyTrendChart');if(monthlyCtx){const monthTotals=months.map(m=>{const e=CACHE[m]||[];return e.reduce((s,x)=>s+x.amount,0);});if(charts.monthly)charts.monthly.destroy();charts.monthly=new Chart(monthlyCtx,{type:'bar',data:{labels:months.map(m=>new Date(m+'-01').toLocaleDateString('en-IN',{month:'short'})),datasets:[{label:'Monthly Spending',data:monthTotals,backgroundColor:'rgba(29,155,240,0.8)',borderColor:'rgb(29,155,240)',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'₹'+v.toLocaleString()}}}}});}const catPieCtx=document.getElementById('categoryPieChart');if(catPieCtx){const allEntries=Object.values(CACHE).flat();const catTotals={};allEntries.forEach(x=>{catTotals[x.cat]=(catTotals[x.cat]||0)+x.amount;});const sortedCats=Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).slice(0,5);if(charts.catPie)charts.catPie.destroy();charts.catPie=new Chart(catPieCtx,{type:'pie',data:{labels:sortedCats.map(c=>c[0]),datasets:[{data:sortedCats.map(c=>c[1]),backgroundColor:['rgb(29,155,240)','rgb(120,86,255)','rgb(255,107,157)','rgb(0,186,136)','rgb(255,169,77)']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});}const cardPieCtx=document.getElementById('cardPieChart');if(cardPieCtx){const allEntries=Object.values(CACHE).flat();const cardTotals={};allEntries.forEach(x=>{cardTotals[x.card]=(cardTotals[x.card]||0)+x.amount;});const sortedCards=Object.entries(cardTotals).sort((a,b)=>b[1]-a[1]).slice(0,5);if(charts.cardPie)charts.cardPie.destroy();charts.cardPie=new Chart(cardPieCtx,{type:'doughnut',data:{labels:sortedCards.map(c=>c[0]),datasets:[{data:sortedCards.map(c=>c[1]),backgroundColor:['rgb(29,155,240)','rgb(120,86,255)','rgb(255,107,157)','rgb(0,186,136)','rgb(255,169,77)']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});}}
