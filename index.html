@@ -137,6 +137,7 @@ body {
   .month-nav-buttons .btn {flex: 1;}
   .top-actions {gap: 8px;}
   .sync-status {display: none;}
+  .mobile-settings-btn {display: block !important; padding: 8px 12px; font-size: 18px;}
   .btn {padding: 8px 16px; font-size: 13px;}
   .mobile-nav {display: block;}
   .form-input, .form-select {font-size: 16px;}
@@ -195,6 +196,7 @@ body {
           <span class="sync-dot" id="syncDot"></span>
           <span id="syncText">Ready</span>
         </div>
+        <button class="btn btn-secondary mobile-settings-btn" id="mobileSettingsBtn" style="display:none">⚙️</button>
         <button class="btn btn-primary" id="addExpenseBtn">+ Add Expense</button>
       </div>
     </div>
@@ -265,6 +267,24 @@ body {
     <button class="btn btn-primary" style="width: 100%;" onclick="saveBudget()">Save Budget</button>
   </div>
 </div>
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Settings</h2>
+      <button class="modal-close" onclick="closeSettingsModal()">×</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <button class="theme-toggle" onclick="toggleTheme()">
+        <span id="themeTextModal">Dark Mode</span>
+        <span id="themeIconModal">🌙</span>
+      </button>
+      <button class="btn btn-secondary" onclick="closeSettingsModal();switchView('export')" style="width:100%;justify-content:center;display:flex;align-items:center;gap:8px">
+        <span>📤</span>
+        <span>Export Data</span>
+      </button>
+    </div>
+  </div>
+</div>
 <script>
 const CATS=['Pets','Home','Electronics','Telecom','Transport','EMI','Travel','Dining','Health','Insurance','Jewellery','Investment','UPI/Cash','Fuel','Groceries','Misc'];
 const DEFAULTS={owner:'YOUR_GITHUB_USERNAME',repo:'YOUR_DATA_REPO_NAME',branch:'main',path:'expenses'};
@@ -283,8 +303,8 @@ const saveCacheLocal=()=>localStorage.setItem('spent_cache',JSON.stringify(CACHE
 const cfgOk=()=>CFG.owner&&CFG.repo&&CFG.token;
 function setSync(state,msg){const d=document.getElementById('syncDot'),t=document.getElementById('syncText');if(!d||!t)return;d.className=state==='syncing'?'sync-dot syncing':state==='error'?'sync-dot error':'sync-dot';t.textContent=msg;}
 function initTheme(){const s=localStorage.getItem('theme')||'light';document.documentElement.setAttribute('data-theme',s);updateThemeUI(s);}
-function toggleTheme(){const c=document.documentElement.getAttribute('data-theme');const n=c==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('theme',n);updateThemeUI(n);}
-function updateThemeUI(t){const txt=document.getElementById('themeText'),icon=document.getElementById('themeIcon');if(t==='dark'){txt.textContent='Light Mode';icon.textContent='☀️';}else{txt.textContent='Dark Mode';icon.textContent='🌙';}}
+function toggleTheme(){const current=document.documentElement.getAttribute('data-theme');const next=current==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',next);localStorage.setItem('theme',next);updateThemeUI(next);updateThemeModalUI();}
+function updateThemeUI(theme){const text=document.getElementById('themeText'),icon=document.getElementById('themeIcon');if(theme==='dark'){text.textContent='Light Mode';icon.textContent='☀️';}else{text.textContent='Dark Mode';icon.textContent='🌙';}}
 function switchView(v){currentView=v;document.getElementById('pageTitle').textContent=v.charAt(0).toUpperCase()+v.slice(1);document.querySelectorAll('.nav-item,.mobile-nav-item').forEach(i=>i.classList.toggle('active',i.getAttribute('data-view')===v));renderView();}
 async function ghGet(p){const r=await fetch(`https://api.github.com/repos/${CFG.owner}/${CFG.repo}/contents/${p}`,{headers:{'Authorization':`token ${CFG.token}`,'Accept':'application/vnd.github.v3+json'}});if(r.status===404)return null;if(!r.ok)throw new Error(`GH ${r.status}`);return r.json();}
 async function ghPut(p,c,s){const b={message:`expense update ${new Date().toISOString().slice(0,10)}`,content:btoa(unescape(encodeURIComponent(c))),branch:CFG.branch||'main'};if(s)b.sha=s;const r=await fetch(`https://api.github.com/repos/${CFG.owner}/${CFG.repo}/contents/${p}`,{method:'PUT',headers:{'Authorization':`token ${CFG.token}`,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},body:JSON.stringify(b)});if(!r.ok){const e=await r.json();throw new Error(e.message||`GH ${r.status}`);}return r.json();}
@@ -295,6 +315,9 @@ function openAddExpenseModal(){const g=document.getElementById('categoryGrid');g
 function closeAddExpenseModal(){document.getElementById('addExpenseModal').classList.remove('active');document.getElementById('expenseForm').reset();selectedCategory='';}
 function openBudgetModal(){document.getElementById('monthlyBudgetInput').value=BUDGETS.monthly||50000;document.getElementById('budgetModal').classList.add('active');}
 function closeBudgetModal(){document.getElementById('budgetModal').classList.remove('active');}
+function openSettingsModal(){document.getElementById('settingsModal').classList.add('active');updateThemeModalUI();}
+function closeSettingsModal(){document.getElementById('settingsModal').classList.remove('active');}
+function updateThemeModalUI(){const theme=document.documentElement.getAttribute('data-theme');const textModal=document.getElementById('themeTextModal');const iconModal=document.getElementById('themeIconModal');if(textModal&&iconModal){if(theme==='dark'){textModal.textContent='Light Mode';iconModal.textContent='☀️';}else{textModal.textContent='Dark Mode';iconModal.textContent='🌙';}}}
 function saveBudget(){BUDGETS.monthly=parseFloat(document.getElementById('monthlyBudgetInput').value)||50000;localStorage.setItem('spent_budgets',JSON.stringify(BUDGETS));closeBudgetModal();renderView();toast('Budget updated','success');}
 function delEntry(id){const m=Object.keys(CACHE).find(k=>CACHE[k].some(e=>e.id===id));if(!m)return;if(!confirm('Delete this expense?'))return;CACHE[m]=CACHE[m].filter(e=>e.id!==id);saveCacheLocal();renderView();if(cfgOk())syncMonth(m);}
 function getCatColor(c){const cols={'Pets':'#f97316','Home':'#8b5cf6','Electronics':'#06b6d4','Telecom':'#84cc16','Transport':'#f59e0b','EMI':'#ec4899','Travel':'#3b82f6','Dining':'#ef4444','Health':'#10b981','Insurance':'#6366f1','Jewellery':'#fbbf24','Investment':'#00d4a8','UPI/Cash':'#94a3b8','Fuel':'#fb923c','Groceries':'#a3e635','Misc':'#6b7280'};return cols[c]||'#6b7280';}
@@ -323,7 +346,8 @@ function initAnalyticsCharts(){if(typeof Chart==='undefined')return;const months
 document.getElementById('themeToggle').addEventListener('click',toggleTheme);
 document.getElementById('addExpenseBtn').addEventListener('click',openAddExpenseModal);
 document.getElementById('closeModal').addEventListener('click',closeAddExpenseModal);
-document.addEventListener('click',e=>{if(e.target.classList.contains('modal-overlay')){closeAddExpenseModal();closeBudgetModal();}if(e.target.closest('.category-btn')){document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('selected'));e.target.classList.add('selected');selectedCategory=e.target.getAttribute('data-category');}});
+document.getElementById('mobileSettingsBtn').addEventListener('click',openSettingsModal);
+document.addEventListener('click',e=>{if(e.target.classList.contains('modal-overlay')){closeAddExpenseModal();closeBudgetModal();closeSettingsModal();}if(e.target.closest('.category-btn')){document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('selected'));e.target.classList.add('selected');selectedCategory=e.target.getAttribute('data-category');}});
 document.querySelectorAll('.nav-item,.mobile-nav-item').forEach(i=>i.addEventListener('click',()=>switchView(i.getAttribute('data-view'))));
 document.getElementById('expenseForm').addEventListener('submit',e=>{e.preventDefault();if(!selectedCategory){toast('Please select a category','error');return;}const exp={id:Date.now()+'_'+Math.random().toString(36).slice(2),date:document.getElementById('dateInput').value,cat:selectedCategory,card:document.getElementById('cardSelect').value,amount:parseFloat(document.getElementById('amountInput').value),comment:document.getElementById('descInput').value,ts:Date.now()};const m=exp.date.slice(0,7);if(!CACHE[m])CACHE[m]=[];CACHE[m].push(exp);saveCacheLocal();closeAddExpenseModal();currentMonth=m;renderView();if(cfgOk())syncMonth(m);});
 initTheme();
