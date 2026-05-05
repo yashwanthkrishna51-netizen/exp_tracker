@@ -64,6 +64,22 @@ body {
   z-index: 100;
 }
 .sidebar.collapsed {transform: translateX(-260px);}
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 99;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.sidebar-overlay.active {
+  display: block;
+  opacity: 1;
+}
 .logo-area {
   padding: 0 24px 24px;
   border-bottom: 1px solid var(--border-light);
@@ -536,21 +552,22 @@ body {
 }
 .debug-button {
   position: fixed;
-  bottom: 24px;
-  left: 24px;
-  width: 48px;
-  height: 48px;
+  top: 80px;
+  left: 280px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: var(--accent-primary);
   color: white;
   border: none;
-  font-size: 20px;
-  box-shadow: var(--shadow-lg);
+  font-size: 18px;
+  box-shadow: var(--shadow-md);
   cursor: pointer;
   z-index: 999;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.3s;
 }
 .debug-button:hover {transform: scale(1.1);}
 @media (max-width: 768px) {
@@ -564,11 +581,30 @@ body {
   .category-grid {grid-template-columns: repeat(2, 1fr);}
   .filters-bar {flex-direction: column;}
   .filter-group {width: 100%;}
+  .debug-button {
+    top: auto;
+    bottom: 90px;
+    left: 20px;
+    width: 44px;
+    height: 44px;
+  }
+  .sidebar-overlay.active {
+    display: block;
+  }
+}
+@media (min-width: 769px) {
+  .sidebar-overlay {
+    display: none !important;
+  }
+}
 }
 </style>
 </head>
 <body>
 <div class="app-container">
+  <!-- Sidebar Overlay (Mobile) -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  
   <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div class="logo-area">
@@ -1085,14 +1121,32 @@ function switchView(v){
 }
 
 function toggleSidebar(){
-  document.getElementById('sidebar').classList.toggle('open');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  sidebar.classList.toggle('open');
+  if(overlay) {
+    overlay.classList.toggle('active');
+  }
 }
 
 function closeSidebar(){
-  document.getElementById('sidebar').classList.remove('open');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  sidebar.classList.remove('open');
+  if(overlay) {
+    overlay.classList.remove('active');
+  }
 }
 
 document.getElementById('menuToggle').addEventListener('click', toggleSidebar);
+
+// Close sidebar when clicking overlay (mobile)
+document.addEventListener('DOMContentLoaded', () => {
+  const overlay = document.getElementById('sidebarOverlay');
+  if(overlay) {
+    overlay.addEventListener('click', closeSidebar);
+  }
+});
 
 // Month Navigation
 function updateMonthDisplay(){
