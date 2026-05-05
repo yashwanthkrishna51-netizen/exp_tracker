@@ -150,6 +150,102 @@ body {
   .category-grid {grid-template-columns: repeat(2, 1fr);}
   .top-bar {padding: 0 8px;}
 }
+.debug-button {
+  position: fixed;
+  bottom: 90px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  font-size: 24px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  cursor: pointer;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+.debug-button:active {
+  transform: scale(0.95);
+}
+.debug-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.9);
+  z-index: 9999;
+  display: none;
+  overflow-y: auto;
+  padding: 20px;
+  color: white;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.debug-panel.active {
+  display: block;
+}
+.debug-header {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #1d9bf0;
+}
+.debug-item {
+  background: rgba(255,255,255,0.1);
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.debug-label {
+  color: #8b98a5;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+.debug-value {
+  font-size: 16px;
+  word-break: break-all;
+}
+.debug-value.success {
+  color: #00d9a5;
+}
+.debug-value.error {
+  color: #ff5c9d;
+}
+.debug-actions {
+  position: sticky;
+  bottom: 0;
+  background: rgba(0,0,0,0.95);
+  padding: 16px 0;
+  display: flex;
+  gap: 12px;
+}
+.debug-btn {
+  flex: 1;
+  padding: 16px;
+  border-radius: 12px;
+  border: none;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+.debug-btn-primary {
+  background: #1d9bf0;
+  color: white;
+}
+.debug-btn-close {
+  background: #333;
+  color: white;
+}
 </style>
 </head>
 <body>
@@ -223,6 +319,64 @@ body {
     </div>
   </nav>
 </div>
+
+<!-- Debug Panel -->
+<button class="debug-button" id="debugBtn" onclick="openDebugPanel()">🐛</button>
+
+<div class="debug-panel" id="debugPanel">
+  <div class="debug-header">🐛 Debug Panel</div>
+  
+  <div class="debug-item">
+    <div class="debug-label">Token Status</div>
+    <div class="debug-value" id="debugToken">Checking...</div>
+  </div>
+  
+  <div class="debug-item">
+    <div class="debug-label">GitHub Owner</div>
+    <div class="debug-value" id="debugOwner">-</div>
+  </div>
+  
+  <div class="debug-item">
+    <div class="debug-label">GitHub Repo</div>
+    <div class="debug-value" id="debugRepo">-</div>
+  </div>
+  
+  <div class="debug-item">
+    <div class="debug-label">Branch</div>
+    <div class="debug-value" id="debugBranch">-</div>
+  </div>
+  
+  <div class="debug-item">
+    <div class="debug-label">Path</div>
+    <div class="debug-value" id="debugPath">-</div>
+  </div>
+  
+  <div class="debug-item">
+    <div class="debug-label">Config Valid?</div>
+    <div class="debug-value" id="debugCfgOk">-</div>
+  </div>
+  
+  <div class="debug-item">
+    <div class="debug-label">Current Month</div>
+    <div class="debug-value" id="debugMonth">-</div>
+  </div>
+  
+  <div class="debug-item">
+    <div class="debug-label">Entries This Month</div>
+    <div class="debug-value" id="debugEntries">-</div>
+  </div>
+  
+  <div class="debug-item">
+    <div class="debug-label">Last Error</div>
+    <div class="debug-value error" id="debugError">None</div>
+  </div>
+  
+  <div class="debug-actions">
+    <button class="debug-btn debug-btn-primary" onclick="debugSyncNow()">🔄 SYNC NOW</button>
+    <button class="debug-btn debug-btn-close" onclick="closeDebugPanel()">✕ Close</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="addExpenseModal">
   <div class="modal">
     <div class="modal-header">
@@ -350,6 +504,85 @@ document.getElementById('mobileSettingsBtn').addEventListener('click',openSettin
 document.addEventListener('click',e=>{if(e.target.classList.contains('modal-overlay')){closeAddExpenseModal();closeBudgetModal();closeSettingsModal();}if(e.target.closest('.category-btn')){document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('selected'));e.target.classList.add('selected');selectedCategory=e.target.getAttribute('data-category');}});
 document.querySelectorAll('.nav-item,.mobile-nav-item').forEach(i=>i.addEventListener('click',()=>switchView(i.getAttribute('data-view'))));
 document.getElementById('expenseForm').addEventListener('submit',e=>{e.preventDefault();if(!selectedCategory){toast('Please select a category','error');return;}const exp={id:Date.now()+'_'+Math.random().toString(36).slice(2),date:document.getElementById('dateInput').value,cat:selectedCategory,card:document.getElementById('cardSelect').value,amount:parseFloat(document.getElementById('amountInput').value),comment:document.getElementById('descInput').value,ts:Date.now()};const m=exp.date.slice(0,7);if(!CACHE[m])CACHE[m]=[];CACHE[m].push(exp);saveCacheLocal();closeAddExpenseModal();currentMonth=m;renderView();if(cfgOk())syncMonth(m);});
+
+let lastDebugError = '';
+function openDebugPanel(){
+  const panel = document.getElementById('debugPanel');
+  panel.classList.add('active');
+  
+  // Token status
+  const tokenEl = document.getElementById('debugToken');
+  if(_envToken && _envToken.length > 10){
+    tokenEl.textContent = '✅ YES (' + _envToken.length + ' chars): ' + _envToken.slice(0,8) + '...';
+    tokenEl.className = 'debug-value success';
+  } else if(CFG.token && CFG.token.length > 10){
+    tokenEl.textContent = '✅ YES (localStorage, ' + CFG.token.length + ' chars)';
+    tokenEl.className = 'debug-value success';
+  } else {
+    tokenEl.textContent = '❌ NO TOKEN FOUND!';
+    tokenEl.className = 'debug-value error';
+  }
+  
+  // Config values
+  document.getElementById('debugOwner').textContent = CFG.owner || '(empty)';
+  document.getElementById('debugRepo').textContent = CFG.repo || '(empty)';
+  document.getElementById('debugBranch').textContent = CFG.branch || '(empty)';
+  document.getElementById('debugPath').textContent = CFG.path || '(empty)';
+  
+  // Config valid
+  const cfgOkEl = document.getElementById('debugCfgOk');
+  const isOk = cfgOk();
+  cfgOkEl.textContent = isOk ? '✅ YES - Ready to sync!' : '❌ NO - Missing token/owner/repo';
+  cfgOkEl.className = isOk ? 'debug-value success' : 'debug-value error';
+  
+  // Current month
+  document.getElementById('debugMonth').textContent = currentMonth;
+  
+  // Entries count
+  const entries = CACHE[currentMonth] || [];
+  document.getElementById('debugEntries').textContent = entries.length + ' entries';
+  
+  // Last error
+  document.getElementById('debugError').textContent = lastDebugError || 'None';
+}
+
+function closeDebugPanel(){
+  document.getElementById('debugPanel').classList.remove('active');
+}
+
+async function debugSyncNow(){
+  const errorEl = document.getElementById('debugError');
+  errorEl.textContent = 'Syncing...';
+  errorEl.className = 'debug-value';
+  
+  try {
+    await syncMonth(currentMonth);
+    errorEl.textContent = '✅ Sync successful!';
+    errorEl.className = 'debug-value success';
+    lastDebugError = '';
+    
+    // Refresh debug info
+    setTimeout(openDebugPanel, 500);
+  } catch(err) {
+    const msg = err.message || String(err);
+    errorEl.textContent = '❌ ' + msg;
+    errorEl.className = 'debug-value error';
+    lastDebugError = msg;
+  }
+}
+
+// Capture sync errors globally
+const originalSyncMonth = syncMonth;
+syncMonth = async function(m) {
+  try {
+    await originalSyncMonth(m);
+    lastDebugError = '';
+  } catch(err) {
+    lastDebugError = err.message || String(err);
+    throw err;
+  }
+};
+
 initTheme();
 if(cfgOk()){setSync('syncing','loading…');loadMonth(currentMonth).then(()=>renderView());}else{setSync('ok','ready');renderView();}
 </script>
