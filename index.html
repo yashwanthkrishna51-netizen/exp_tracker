@@ -292,6 +292,10 @@ body {
           <span class="sync-dot" id="syncDot"></span>
           <span id="syncText">Ready</span>
         </div>
+        <div class="sync-status" id="usernameDisplay" style="display:none">
+          <span>👤</span>
+          <span id="currentUsername">...</span>
+        </div>
         <button class="btn btn-secondary mobile-settings-btn" id="mobileSettingsBtn" style="display:none">⚙️</button>
         <button class="btn btn-primary" id="addExpenseBtn">+ Add Expense</button>
       </div>
@@ -436,6 +440,10 @@ body {
         <span>📤</span>
         <span>Export Data</span>
       </button>
+      <button class="btn btn-secondary" onclick="handleLogout()" style="width:100%;justify-content:center;display:flex;align-items:center;gap:8px;background:var(--danger);color:white">
+        <span>🚪</span>
+        <span>Logout</span>
+      </button>
     </div>
   </div>
 </div>
@@ -444,6 +452,9 @@ const CATS=['Pets','Home','Electronics','Telecom','Transport','EMI','Travel','Di
 const DEFAULTS={owner:'YOUR_GITHUB_USERNAME',repo:'YOUR_DATA_REPO_NAME',branch:'main',path:'expenses'};
 const _envToken='';
 let currentView='dashboard';let selectedCategory='';let currentMonth=new Date().toISOString().slice(0,7);
+let currentUser=null;
+let idleTimer=null;
+let idleTimeout=5*60*1000;
 let CACHE=JSON.parse(localStorage.getItem('spent_cache')||'{}');
 let BUDGETS=JSON.parse(localStorage.getItem('spent_budgets')||'{"monthly":50000,"categories":{}}');
 const _saved=JSON.parse(localStorage.getItem('spent_cfg')||'{}');
@@ -461,7 +472,7 @@ function updateThemeUI(theme){const text=document.getElementById('themeText'),ic
 function switchView(v){currentView=v;document.getElementById('pageTitle').textContent=v.charAt(0).toUpperCase()+v.slice(1);document.querySelectorAll('.nav-item,.mobile-nav-item').forEach(i=>i.classList.toggle('active',i.getAttribute('data-view')===v));renderView();}
 async function ghGet(p){const r=await fetch(`https://api.github.com/repos/${CFG.owner}/${CFG.repo}/contents/${p}`,{headers:{'Authorization':`token ${CFG.token}`,'Accept':'application/vnd.github.v3+json'}});if(r.status===404)return null;if(!r.ok)throw new Error(`GH ${r.status}`);return r.json();}
 async function ghPut(p,c,s){const b={message:`expense update ${new Date().toISOString().slice(0,10)}`,content:btoa(unescape(encodeURIComponent(c))),branch:CFG.branch||'main'};if(s)b.sha=s;const r=await fetch(`https://api.github.com/repos/${CFG.owner}/${CFG.repo}/contents/${p}`,{method:'PUT',headers:{'Authorization':`token ${CFG.token}`,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},body:JSON.stringify(b)});if(!r.ok){const e=await r.json();throw new Error(e.message||`GH ${r.status}`);}return r.json();}
-function ghPath(m){return`${(CFG.path||'expenses').replace(/\/$/,'')}/expenses-${m}.json`;}
+function ghPath(m){if(!currentUser)return null;return`${(CFG.path||'expenses').replace(/\/$/,'')}/${currentUser}/expenses-${m}.json`;}
 async function syncMonth(m){if(!cfgOk())return;setSync('syncing','syncing…');try{const p=ghPath(m);const e=await ghGet(p);const l=CACHE[m]||[];if(e){const r=JSON.parse(decodeURIComponent(escape(atob(e.content.replace(/\n/g,'')))));const ids=new Set(r.map(x=>x.id));const merged=[...r,...l.filter(x=>!ids.has(x.id))];merged.sort((a,b)=>a.ts-b.ts);CACHE[m]=merged;saveCacheLocal();await ghPut(p,JSON.stringify(merged,null,2),e.sha);}else{await ghPut(p,JSON.stringify(l,null,2));}setSync('ok','synced');toast('Synced ✓','success');}catch(err){setSync('error','error');toast('Sync failed: '+err.message,'error');}renderView();}
 async function loadMonth(m){if(!cfgOk())return;setSync('syncing','loading…');try{const e=await ghGet(ghPath(m));if(e){const d=JSON.parse(decodeURIComponent(escape(atob(e.content.replace(/\n/g,'')))));CACHE[m]=d;saveCacheLocal();}setSync('ok','synced');}catch(err){setSync('error','error');}renderView();}
 function openAddExpenseModal(){const g=document.getElementById('categoryGrid');g.innerHTML=CATS.map(c=>`<button type="button" class="category-btn" data-category="${c}">${c}</button>`).join('');const s=document.getElementById('cardSelect');s.innerHTML=getCards().map(c=>`<option value="${c}">${c}</option>`).join('');document.getElementById('dateInput').value=todayStr();document.getElementById('addExpenseModal').classList.add('active');}
@@ -582,8 +593,74 @@ syncMonth = async function(m) {
   }
 };
 
+async function fetchCurrentUser(){
+  try {
+    const res = await fetch('/api/user');
+    if(!res.ok) throw new Error('Not authenticated');
+    const data = await res.json();
+    currentUser = data.username;
+    document.getElementById('currentUsername').textContent = currentUser;
+    document.getElementById('usernameDisplay').style.display = 'flex';
+    return currentUser;
+  } catch(err) {
+    window.location.href = '/login.html';
+    throw err;
+  }
+}
+
+async function handleLogout(){
+  try {
+    await fetch('/api/auth', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({action: 'logout'})
+    });
+  } catch(err) {
+    console.error('Logout error:', err);
+  }
+  localStorage.clear();
+  window.location.href = '/login.html';
+}
+
+function resetIdleTimer(){
+  if(!idleTimer) return;
+  clearTimeout(idleTimer);
+  if(window.innerWidth <= 768) {
+    idleTimer = setTimeout(() => {
+      handleLogout();
+    }, idleTimeout);
+  }
+}
+
+function initIdleTimer(){
+  if(window.innerWidth <= 768) {
+    ['mousedown','touchstart','keydown','scroll'].forEach(evt => {
+      document.addEventListener(evt, resetIdleTimer, true);
+    });
+    document.addEventListener('visibilitychange', () => {
+      if(document.hidden) {
+        clearTimeout(idleTimer);
+      } else {
+        resetIdleTimer();
+      }
+    });
+    resetIdleTimer();
+  }
+}
+
 initTheme();
-if(cfgOk()){setSync('syncing','loading…');loadMonth(currentMonth).then(()=>renderView());}else{setSync('ok','ready');renderView();}
+fetchCurrentUser().then(() => {
+  initIdleTimer();
+  if(cfgOk()){
+    setSync('syncing','loading…');
+    loadMonth(currentMonth).then(()=>renderView());
+  } else {
+    setSync('ok','ready');
+    renderView();
+  }
+}).catch(err => {
+  console.error('Auth failed:', err);
+});
 </script>
 </body>
 </html>
