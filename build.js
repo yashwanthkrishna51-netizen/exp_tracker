@@ -51,12 +51,19 @@ try {
   );
   console.log('  ✓ Updated DEFAULTS');
 
-  // 2. Replace _envToken value (flexible regex for spaces)
+  // 2. Replace _envToken value (matches empty string with flexible spacing)
+  const beforeReplace = html;
   html = html.replace(
-    /const _envToken\s*=\s*['"];/,
+    /const _envToken\s*=\s*'';/,
     `const _envToken='${token}';`
   );
-  console.log('  ✓ Injected token');
+  
+  if (html === beforeReplace) {
+    console.error('  ⚠️  WARNING: Token pattern not found! Regex did not match.');
+    console.error('  Looking for: const _envToken=\\'\\';');
+  } else {
+    console.log('  ✓ Injected token');
+  }
 
   // 3. Ensure public dir exists
   const publicDir = path.join(__dirname, 'public');
