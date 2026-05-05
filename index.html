@@ -447,7 +447,6 @@ let currentView='dashboard';let selectedCategory='';let currentMonth=new Date().
 let CACHE=JSON.parse(localStorage.getItem('spent_cache')||'{}');
 let BUDGETS=JSON.parse(localStorage.getItem('spent_budgets')||'{"monthly":50000,"categories":{}}');
 const _saved=JSON.parse(localStorage.getItem('spent_cfg')||'{}');
-window._envToken=(_envToken&&_envToken!=='');
 let CFG={owner:_saved.owner||DEFAULTS.owner,repo:_saved.repo||DEFAULTS.repo,token:_envToken||_saved.token||'',branch:_saved.branch||DEFAULTS.branch,path:_saved.path||DEFAULTS.path};
 const fmt=n=>'₹'+Number(n).toLocaleString('en-IN');
 const todayStr=()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
