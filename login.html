@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Login - Spent Expense Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg-primary: #ffffff; --bg-secondary: #f8f9fb; --bg-elevated: #ffffff;
+  --text-primary: #0f1419; --text-secondary: #536471; --border-light: #e8ecef;
+  --accent-primary: #1d9bf0; --accent-hover: #1a8cd8; --danger: #f91880;
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08); --shadow-lg: 0 12px 24px rgba(0,0,0,0.12);
+}
+* {margin: 0; padding: 0; box-sizing: border-box;}
+body {
+  font-family: 'DM Sans', -apple-system, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.login-container {background: var(--bg-elevated); border-radius: 24px; padding: 48px; max-width: 420px; width: 100%; box-shadow: var(--shadow-lg);}
+.logo {font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 32px; color: var(--accent-primary); text-align: center; margin-bottom: 8px;}
+.tagline {text-align: center; color: var(--text-secondary); font-size: 14px; margin-bottom: 40px;}
+.form-group {margin-bottom: 24px;}
+.form-label {display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;}
+.form-input {width: 100%; padding: 14px 16px; border: 2px solid var(--border-light); border-radius: 12px; background: var(--bg-secondary); color: var(--text-primary); font-size: 16px; font-family: inherit; transition: all 0.2s;}
+.form-input:focus {outline: none; border-color: var(--accent-primary); background: var(--bg-primary);}
+.btn {width: 100%; padding: 14px 20px; border-radius: 12px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit; background: var(--accent-primary); color: white;}
+.btn:hover {background: var(--accent-hover); transform: translateY(-1px);}
+.btn:disabled {opacity: 0.6; cursor: not-allowed;}
+.error {background: #fee; border: 2px solid var(--danger); color: var(--danger); padding: 12px 16px; border-radius: 12px; font-size: 14px; margin-bottom: 20px; display: none;}
+.error.show {display: block;}
+@media (max-width: 480px) {.login-container {padding: 32px 24px;}}
+</style>
+</head>
+<body>
+<div class="login-container">
+  <div class="logo">SPENT</div>
+  <div class="tagline">Track your expenses securely</div>
+  <div class="error" id="error"></div>
+  <form id="loginForm">
+    <div class="form-group">
+      <label class="form-label">Username</label>
+      <input type="text" class="form-input" id="username" required autocomplete="username" autofocus>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" class="form-input" id="password" required autocomplete="current-password">
+    </div>
+    <button type="submit" class="btn" id="loginBtn">Login</button>
+  </form>
+</div>
+<script>
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const error = document.getElementById('error');
+  const btn = document.getElementById('loginBtn');
+  error.classList.remove('show');
+  btn.disabled = true;
+  btn.textContent = 'Logging in...';
+  try {
+    const response = await fetch('/api/auth', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({action: 'login', username, password})
+    });
+    const data = await response.json();
+    if (data.success) {
+      window.location.href = '/';
+    } else {
+      error.textContent = data.error || 'Invalid credentials';
+      error.classList.add('show');
+      btn.disabled = false;
+      btn.textContent = 'Login';
+    }
+  } catch (err) {
+    error.textContent = 'Login failed. Please try again.';
+    error.classList.add('show');
+    btn.disabled = false;
+    btn.textContent = 'Login';
+  }
+});
+</script>
+</body>
+</html>
