@@ -59,8 +59,8 @@ try {
   );
   
   if (html === beforeReplace) {
-    console.error('  ⚠️  WARNING: Token pattern not found! Regex did not match.');
-    console.error('  Looking for: const _envToken=\\'\\';');
+    console.error("  ⚠️  WARNING: Token pattern not found! Regex did not match.");
+    console.error("  Looking for: const _envToken='';");
   } else {
     console.log('  ✓ Injected token');
   }
