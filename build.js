@@ -51,10 +51,10 @@ try {
   );
   console.log('  ✓ Updated DEFAULTS');
 
-  // 2. Replace _envToken value (simple string replacement)
+  // 2. Replace _envToken value (flexible regex for spaces)
   html = html.replace(
-    /const _envToken = '';/,
-    `const _envToken = '${token}';`
+    /const _envToken\s*=\s*['"];/,
+    `const _envToken='${token}';`
   );
   console.log('  ✓ Injected token');
 
@@ -67,8 +67,24 @@ try {
   // 4. Write output
   const outPath = path.join(publicDir, 'index.html');
   fs.writeFileSync(outPath, html);
-  console.log(`  ✓ Wrote public/index.html\n`);
+  console.log(`  ✓ Wrote public/index.html`);
 
+  // 5. Copy login page
+  const loginPath = path.join(__dirname, 'login.html');
+  if (fs.existsSync(loginPath)) {
+    const loginOut = path.join(publicDir, 'login.html');
+    fs.copyFileSync(loginPath, loginOut);
+    console.log(`  ✓ Copied login.html`);
+  }
+
+  // 6. Copy middleware
+  const middlewarePath = path.join(__dirname, 'middleware.js');
+  if (fs.existsSync(middlewarePath)) {
+    const middlewareOut = path.join(__dirname, 'middleware.js'); // stays in root
+    console.log(`  ✓ Middleware ready`);
+  }
+
+  console.log('');
   console.log('✅ BUILD SUCCESS\n');
   process.exit(0);
 
