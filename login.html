@@ -1,85 +1,321 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Login - Spent Expense Tracker</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<title>Login - expense.io</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lucide-static@0.294.0/font/lucide.min.css">
 <style>
 :root {
-  --bg-primary: #ffffff; --bg-secondary: #f8f9fb; --bg-elevated: #ffffff;
-  --text-primary: #0f1419; --text-secondary: #536471; --border-light: #e8ecef;
-  --accent-primary: #1d9bf0; --accent-hover: #1a8cd8; --danger: #f91880;
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.08); --shadow-lg: 0 12px 24px rgba(0,0,0,0.12);
+  --bg: #000000;
+  --card-bg: #1a1a1a;
+  --text: #ffffff;
+  --text-secondary: #a0a0a0;
+  --border: #2a2a2a;
+  --accent: #FF6B35;
+  --accent-hover: #E55A2B;
+}
+[data-theme="light"] {
+  --bg: #f5f5f5;
+  --card-bg: #ffffff;
+  --text: #0a0a0a;
+  --text-secondary: #666666;
+  --border: #e0e0e0;
 }
 * {margin: 0; padding: 0; box-sizing: border-box;}
 body {
-  font-family: 'DM Sans', -apple-system, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  transition: background 0.3s, color 0.3s;
 }
-.login-container {background: var(--bg-elevated); border-radius: 24px; padding: 48px; max-width: 420px; width: 100%; box-shadow: var(--shadow-lg);}
-.logo {font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 32px; color: var(--accent-primary); text-align: center; margin-bottom: 8px;}
-.tagline {text-align: center; color: var(--text-secondary); font-size: 14px; margin-bottom: 40px;}
-.form-group {margin-bottom: 24px;}
-.form-label {display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;}
-.form-input {width: 100%; padding: 14px 16px; border: 2px solid var(--border-light); border-radius: 12px; background: var(--bg-secondary); color: var(--text-primary); font-size: 16px; font-family: inherit; transition: all 0.2s;}
-.form-input:focus {outline: none; border-color: var(--accent-primary); background: var(--bg-primary);}
-.btn {width: 100%; padding: 14px 20px; border-radius: 12px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit; background: var(--accent-primary); color: white;}
-.btn:hover {background: var(--accent-hover); transform: translateY(-1px);}
-.btn:disabled {opacity: 0.6; cursor: not-allowed;}
-.error {background: #fee; border: 2px solid var(--danger); color: var(--danger); padding: 12px 16px; border-radius: 12px; font-size: 14px; margin-bottom: 20px; display: none;}
+.theme-toggle {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+.theme-toggle:hover {opacity: 0.8;}
+.login-container {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 48px;
+  max-width: 450px;
+  width: 100%;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  border: 1px solid var(--border);
+}
+.logo {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--accent);
+  text-align: center;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.tagline {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 15px;
+  margin-bottom: 32px;
+}
+.features {
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 32px;
+  border: 1px solid var(--border);
+}
+.features-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: var(--text);
+}
+.feature i {color: var(--accent); font-size: 16px;}
+.form-group {margin-bottom: 20px;}
+.form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.form-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 16px;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.form-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.btn {
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 10px;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  background: var(--accent);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn:hover {
+  background: var(--accent-hover);
+  transform: translateY(-2px);
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+.error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid #ef4444;
+  color: #ef4444;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  margin-bottom: 20px;
+  display: none;
+}
 .error.show {display: block;}
-@media (max-width: 480px) {.login-container {padding: 32px 24px;}}
+.help-text {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+.help-text a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.help-text a:hover {text-decoration: underline;}
+@media (max-width: 480px) {
+  .login-container {padding: 32px 24px;}
+  .theme-toggle {top: 12px; right: 12px; font-size: 13px; padding: 8px 12px;}
+}
 </style>
 </head>
 <body>
+<button class="theme-toggle" onclick="toggleTheme()" id="themeToggle">
+  <i data-lucide="sun"></i>
+  <span id="themeText">Light Mode</span>
+</button>
+
 <div class="login-container">
-  <div class="logo">SPENT</div>
+  <div class="logo">
+    <i data-lucide="wallet"></i>
+    expense.io
+  </div>
   <div class="tagline">Track your expenses securely</div>
+  
+  <div class="features">
+    <div class="features-title">Features</div>
+    <div class="feature">
+      <i data-lucide="lock"></i>
+      <span>Multi-user authentication</span>
+    </div>
+    <div class="feature">
+      <i data-lucide="cloud"></i>
+      <span>Automatic GitHub sync</span>
+    </div>
+    <div class="feature">
+      <i data-lucide="bar-chart-3"></i>
+      <span>Real-time analytics</span>
+    </div>
+    <div class="feature">
+      <i data-lucide="smartphone"></i>
+      <span>Mobile optimized</span>
+    </div>
+  </div>
+  
   <div class="error" id="error"></div>
+  
   <form id="loginForm">
     <div class="form-group">
       <label class="form-label">Username</label>
       <input type="text" class="form-input" id="username" required autocomplete="username" autofocus>
     </div>
+    
     <div class="form-group">
       <label class="form-label">Password</label>
       <input type="password" class="form-input" id="password" required autocomplete="current-password">
     </div>
-    <button type="submit" class="btn" id="loginBtn">Login</button>
+    
+    <button type="submit" class="btn" id="loginBtn">
+      <i data-lucide="log-in"></i>
+      <span>Login</span>
+    </button>
   </form>
+  
+  <div class="help-text">
+    Forgot password or having issues?<br>
+    Contact <a href="mailto:yashwanth.krishna51@gmail.com">yashwanth.krishna51@gmail.com</a>
+  </div>
 </div>
+
+<script src="https://unpkg.com/lucide@0.294.0/dist/umd/lucide.min.js" defer onload="initIcons()"></script>
 <script>
+function initIcons(){
+  if(typeof lucide !== 'undefined'){
+    lucide.createIcons();
+  }
+}
+window.initIcons = initIcons;
+
+function toggleTheme(){
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+  
+  const text = document.getElementById('themeText');
+  const toggle = document.getElementById('themeToggle');
+  
+  if(next === 'dark'){
+    text.textContent = 'Light Mode';
+    toggle.querySelector('i').setAttribute('data-lucide', 'sun');
+  } else {
+    text.textContent = 'Dark Mode';
+    toggle.querySelector('i').setAttribute('data-lucide', 'moon');
+  }
+  initIcons();
+}
+
+// Init theme from storage
+const saved = localStorage.getItem('theme') || 'dark';
+document.documentElement.setAttribute('data-theme', saved);
+if(saved === 'dark'){
+  document.getElementById('themeText').textContent = 'Light Mode';
+  document.getElementById('themeToggle').querySelector('i').setAttribute('data-lucide', 'sun');
+} else {
+  document.getElementById('themeText').textContent = 'Dark Mode';
+  document.getElementById('themeToggle').querySelector('i').setAttribute('data-lucide', 'moon');
+}
+// Icons will be initialized by onload callback
+
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+  
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value;
   const error = document.getElementById('error');
   const btn = document.getElementById('loginBtn');
+  
   error.classList.remove('show');
   btn.disabled = true;
-  btn.textContent = 'Logging in...';
+  btn.querySelector('span').textContent = 'Logging in...';
+  
   try {
     const response = await fetch('/api/auth', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({action: 'login', username, password})
     });
+    
     const data = await response.json();
+    
     if (data.success) {
       window.location.href = '/';
     } else {
       error.textContent = data.error || 'Invalid credentials';
       error.classList.add('show');
       btn.disabled = false;
-      btn.textContent = 'Login';
+      btn.querySelector('span').textContent = 'Login';
     }
   } catch (err) {
     error.textContent = 'Login failed. Please try again.';
     error.classList.add('show');
     btn.disabled = false;
-    btn.textContent = 'Login';
+    btn.querySelector('span').textContent = 'Login';
   }
 });
 </script>
