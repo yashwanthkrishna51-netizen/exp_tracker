@@ -550,6 +550,9 @@ body {
   from {transform: translateY(100px); opacity: 0;}
   to {transform: translateY(0); opacity: 1;}
 }
+@keyframes spin {
+  to {transform: rotate(360deg);}
+}
 .debug-button {
   position: fixed;
   bottom: 32px;
@@ -1115,23 +1118,28 @@ let CACHE=JSON.parse(localStorage.getItem('spent_cache')||'{}');
 let BUDGETS=JSON.parse(localStorage.getItem('spent_budgets')||'{"monthly":50000,"categories":{}}');
 
 // ── Encryption (AES-256-GCM) ──────────────────────────────────────────────
-let _encCryptoKey = null;   // CryptoKey object
-let _encKeyHex    = null;   // raw 64-char hex (for fingerprint display)
+let _encCryptoKey  = null;   // CryptoKey object
+let _encKeyHex     = null;   // raw 64-char hex (for fingerprint display)
+let _encState      = 'loading'; // 'loading' | 'ready' | 'unavailable'
 
 async function fetchEncryptionKey(){
   try {
     const res = await fetch('/api/config');
-    if(!res.ok) return;
+    if(!res.ok){ _encState = 'unavailable'; return; }
     const { encryptionKey } = await res.json();
-    if(!encryptionKey || encryptionKey.length !== 64) return;
+    if(!encryptionKey || encryptionKey.length !== 64){ _encState = 'unavailable'; return; }
     _encKeyHex = encryptionKey;
     const keyBytes = new Uint8Array(encryptionKey.match(/.{2}/g).map(h=>parseInt(h,16)));
     _encCryptoKey = await crypto.subtle.importKey('raw', keyBytes, {name:'AES-GCM'}, false, ['encrypt','decrypt']);
-  } catch(e) { console.warn('Encryption key unavailable:', e.message); }
+    _encState = 'ready';
+  } catch(e) {
+    _encState = 'unavailable';
+    console.warn('Encryption key unavailable:', e.message);
+  }
 }
 
 async function encryptJSON(obj){
-  if(!_encCryptoKey) return JSON.stringify(obj);
+  if(!_encCryptoKey) throw new Error('Encryption key not loaded — cannot write data');
   const iv  = crypto.getRandomValues(new Uint8Array(12));
   const enc = new TextEncoder().encode(JSON.stringify(obj));
   const buf = await crypto.subtle.encrypt({name:'AES-GCM',iv}, _encCryptoKey, enc);
@@ -1292,6 +1300,7 @@ async function loadMonth(m){
     if(e){
       const raw=decodeURIComponent(escape(atob(e.content.replace(/\n/g,''))));
       const d=await decryptJSON(raw);
+      if(d === null) throw new Error('Decryption returned null');
       CACHE[m]=d;
       saveCacheLocal();
     }
@@ -1299,6 +1308,7 @@ async function loadMonth(m){
   }catch(err){
     setSync('error','error');
     lastDebugError = err.message;
+    toast('Failed to load data: ' + err.message, 'error');
   }
   renderView();
 }
@@ -1721,6 +1731,34 @@ function toggleExpenseSelection(id){
 // Render Views
 function renderView(){
   const c=document.getElementById('contentArea');
+
+  // Block render until encryption state is resolved
+  if(_encState === 'loading'){
+    c.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:16px">
+        <div style="width:40px;height:40px;border:3px solid var(--border-light);border-top-color:var(--accent-primary);border-radius:50%;animation:spin 0.8s linear infinite"></div>
+        <div style="font-size:15px;font-weight:600;color:var(--text-secondary)">Initializing secure connection…</div>
+        <div style="font-size:13px;color:var(--text-tertiary)">Fetching encryption key from server</div>
+      </div>`;
+    return;
+  }
+  if(_encState === 'unavailable'){
+    c.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:12px;text-align:center;padding:40px">
+        <div style="font-size:48px">🔐</div>
+        <div style="font-size:18px;font-weight:700;color:var(--danger)">Encryption Key Unavailable</div>
+        <div style="font-size:14px;color:var(--text-secondary);max-width:400px;line-height:1.6">
+          Could not load <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px">ENC_KEY</code> from
+          <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px">/api/config</code>.<br><br>
+          Add <strong>ENC_KEY</strong> to your Vercel environment variables and redeploy.
+        </div>
+        <button class="btn btn-secondary" onclick="location.reload()" style="margin-top:8px">
+          Retry
+        </button>
+      </div>`;
+    return;
+  }
+
   switch(currentView){
     case'dashboard':c.innerHTML=renderDashboard();setTimeout(initDashboardCharts,100);break;
     case'expenses':c.innerHTML=renderExpenses();break;
@@ -2211,15 +2249,7 @@ SIP (Mutual Fund) | 0 | pending`;
         </button>
       </div>
     </div>
-    
-    <div class="widget">
-      <div class="widget-header">
-        <div class="widget-title">Raw JSON Data</div>
-        <div style="font-size:13px;color:var(--text-secondary)">${e.length} entries</div>
-      </div>
-      <div style="background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:8px;padding:16px;margin-top:16px;font-family:monospace;font-size:11px;max-height:300px;overflow-y:auto;white-space:pre-wrap">${JSON.stringify(e,null,2)}</div>
-    </div>
-  `;
+  \`;
 }
 
 function exportCSV(){
@@ -2482,7 +2512,7 @@ updateMonthDisplay();
 
 fetchCurrentUser().then(() => {
   initIdleTimer();
-  // Fetch encryption key and budget in parallel, then sync
+  renderView(); // show loading spinner immediately
   return Promise.all([fetchEncryptionKey(), loadBudgetFromServer()]);
 }).then(() => {
   if(cfgOk()){
