@@ -1157,7 +1157,7 @@ let CFG={owner:_saved.owner||DEFAULTS.owner,repo:_saved.repo||DEFAULTS.repo,toke
 // Safe Lucide initialization
 function initLucideIcons(){
   if(typeof lucide !== 'undefined'){
-    initLucideIcons();
+    lucide.createIcons();
   }
 }
 window.initLucideIcons = initLucideIcons;
