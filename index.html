@@ -603,13 +603,17 @@ body {
 /* ── Enterprise Debug Panel ── */
 .debug-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background: rgba(0,0,0,0.65);
   display: none;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  z-index: 9999;
   padding: 20px;
+  box-sizing: border-box;
   overflow-y: auto;
 }
 .debug-overlay.active { display: flex; }
@@ -939,6 +943,11 @@ body {
 </div>
 
 <button class="debug-button" id="debugBtn" onclick="openDebugPanel()">🐛</button>
+
+<!-- Toast Notification -->
+<div class="toast" id="toast">
+  <span id="toastMessage"></span>
+</div>
 
 <!-- Enterprise Debug Panel -->
 <div class="debug-overlay" id="debugPanel">
@@ -1615,13 +1624,11 @@ function openDebugPanel(){
   if(errEl) errEl.style.color = lastDebugError ? 'var(--danger)' : 'var(--success)';
 
   document.getElementById('debugPanel').classList.add('active');
-  document.body.style.overflow = 'hidden';
   initLucideIcons();
 }
 
 function closeDebugPanel(){
   document.getElementById('debugPanel').classList.remove('active');
-  document.body.style.overflow = '';
 }
 
 function dbgCopy(id){
