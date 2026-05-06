@@ -2294,12 +2294,18 @@ function importCSV(event){
   reader.readAsText(file);
 }
 // Chart Functions
+const _charts = {};
+function destroyChart(id){
+  if(_charts[id]){ _charts[id].destroy(); delete _charts[id]; }
+}
+
 function initDashboardCharts(){
   const e=CACHE[currentMonth]||[];
   
   // Trend Chart
   const trendCanvas = document.getElementById('trendChart');
   if(!trendCanvas) return;
+  destroyChart('trendChart');
   
   let labels, data;
   
@@ -2324,7 +2330,7 @@ function initDashboardCharts(){
     data = labels.map(w => weeklyTotals[w]);
   }
   
-  new Chart(trendCanvas, {
+  _charts['trendChart'] = new Chart(trendCanvas, {
     type: 'line',
     data: {
       labels,
@@ -2347,6 +2353,7 @@ function initDashboardCharts(){
   // Category Chart
   const catCanvas = document.getElementById('categoryChart');
   if(!catCanvas) return;
+  destroyChart('categoryChart');
   
   const catTotals = {};
   e.forEach(x => catTotals[x.cat] = (catTotals[x.cat]||0) + x.amount);
@@ -2354,7 +2361,7 @@ function initDashboardCharts(){
   const catData = catLabels.map(c => catTotals[c]);
   const catColors = catLabels.map(c => getCatColor(c));
   
-  new Chart(catCanvas, {
+  _charts['categoryChart'] = new Chart(catCanvas, {
     type: categoryChartType,
     data: {
       labels: catLabels,
@@ -2375,6 +2382,7 @@ function initAnalyticsCharts(){
   // Monthly Trend (last 6 months)
   const trendCanvas = document.getElementById('monthlyTrendChart');
   if(!trendCanvas) return;
+  destroyChart('monthlyTrendChart');
   
   const months = [];
   const totals = [];
@@ -2387,7 +2395,7 @@ function initAnalyticsCharts(){
     totals.push((CACHE[m]||[]).reduce((s,x)=>s+x.amount,0));
   }
   
-  new Chart(trendCanvas, {
+  _charts['monthlyTrendChart'] = new Chart(trendCanvas, {
     type: 'line',
     data: {
       labels: months,
@@ -2410,6 +2418,7 @@ function initAnalyticsCharts(){
   // Category Pie
   const catCanvas = document.getElementById('categoryPieChart');
   if(!catCanvas) return;
+  destroyChart('categoryPieChart');
   
   const e = CACHE[currentMonth]||[];
   const catTotals = {};
@@ -2418,7 +2427,7 @@ function initAnalyticsCharts(){
   const catData = catLabels.map(c => catTotals[c]);
   const catColors = catLabels.map(c => getCatColor(c));
   
-  new Chart(catCanvas, {
+  _charts['categoryPieChart'] = new Chart(catCanvas, {
     type: 'pie',
     data: {
       labels: catLabels,
@@ -2437,13 +2446,14 @@ function initAnalyticsCharts(){
   // Card Pie
   const cardCanvas = document.getElementById('cardPieChart');
   if(!cardCanvas) return;
+  destroyChart('cardPieChart');
   
   const cardTotals = {};
   e.forEach(x => cardTotals[x.card] = (cardTotals[x.card]||0) + x.amount);
   const cardLabels = Object.keys(cardTotals);
   const cardData = cardLabels.map(c => cardTotals[c]);
   
-  new Chart(cardCanvas, {
+  _charts['cardPieChart'] = new Chart(cardCanvas, {
     type: 'pie',
     data: {
       labels: cardLabels,
