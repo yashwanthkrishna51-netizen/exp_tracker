@@ -726,6 +726,40 @@ body {
 [data-theme="dark"] .debug-enc-ok  { color: #10b981; }
 [data-theme="dark"] .debug-enc-off { color: #f87171; }
 
+/* Health check styles */
+.debug-section-title-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.debug-section-title-row .debug-section-title { margin-bottom:0; }
+.debug-run-btn {
+  font-size:10px; font-weight:700; padding:3px 10px; border-radius:99px;
+  background:#FF6B35; color:white; border:none; cursor:pointer;
+  letter-spacing:0.4px; text-transform:uppercase; transition:all 0.15s;
+}
+.debug-run-btn:hover { background:#E55A2B; }
+.debug-run-btn:disabled { background:#999; cursor:not-allowed; }
+.debug-health-row {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:8px 0; border-top:1px solid #f0f0f0;
+}
+[data-theme="dark"] .debug-health-row { border-top-color:#222; }
+.debug-health-label { display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; color:#444; }
+[data-theme="dark"] .debug-health-label { color:#aaa; }
+.debug-health-icon { font-size:10px; color:#ccc; }
+.debug-hc-badge {
+  font-size:10px; font-weight:800; letter-spacing:0.6px; text-transform:uppercase;
+  padding:3px 10px; border-radius:99px; white-space:nowrap; font-family:monospace;
+  display:flex; align-items:center; gap:5px;
+}
+.hc-unknown  { background:#f0f0f0; color:#999; border:1px solid #ddd; }
+.hc-checking { background:rgba(245,158,11,0.12); color:#b45309; border:1px solid rgba(245,158,11,0.3); animation:hcpulse 1s infinite; }
+.hc-ok       { background:rgba(16,185,129,0.12); color:#059669; border:1px solid rgba(16,185,129,0.35); }
+.hc-warn     { background:rgba(245,158,11,0.12); color:#b45309; border:1px solid rgba(245,158,11,0.3); }
+.hc-fail     { background:rgba(239,68,68,0.10); color:#dc2626; border:1px solid rgba(239,68,68,0.3); }
+[data-theme="dark"] .hc-unknown  { background:#252525; color:#555; border-color:#333; }
+[data-theme="dark"] .hc-ok       { color:#10b981; }
+[data-theme="dark"] .hc-warn     { color:#f59e0b; }
+[data-theme="dark"] .hc-fail     { color:#f87171; }
+@keyframes hcpulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
 /* Actions bar */
 .debug-actions {
   padding: 14px 20px; display: flex; gap: 10px; flex-shrink: 0;
@@ -968,46 +1002,55 @@ body {
       <!-- LEFT COLUMN -->
       <div class="debug-col">
 
+        <!-- SERVICE HEALTH -->
         <div class="debug-section">
-          <div class="debug-section-title">Auth &amp; Configuration</div>
-          <div class="debug-row">
-            <span class="debug-key">GitHub Token</span>
-            <div class="debug-status">
-              <span id="dbg-token-val" class="debug-val"></span>
-              <span id="dbg-token-dot" class="debug-dot"></span>
+          <div class="debug-section-title-row">
+            <span class="debug-section-title">Service Health</span>
+            <button class="debug-run-btn" id="dbg-run-btn" onclick="runHealthCheck()">Run Check</button>
+          </div>
+          <div class="debug-health-row">
+            <div class="debug-health-label">
+              <span class="debug-health-icon">⬡</span>
+              <span>GitHub API</span>
             </div>
+            <div id="hc-github" class="debug-hc-badge hc-unknown">— UNKNOWN</div>
           </div>
-          <div class="debug-row">
-            <span class="debug-key">Owner</span>
-            <div style="display:flex;align-items:center;gap:6px">
-              <span id="dbg-owner" class="debug-val"></span>
-              <button class="debug-copy-btn" onclick="dbgCopy('dbg-owner')">copy</button>
+          <div class="debug-health-row">
+            <div class="debug-health-label">
+              <span class="debug-health-icon">⬡</span>
+              <span>Authentication</span>
             </div>
+            <div id="hc-auth" class="debug-hc-badge hc-unknown">— UNKNOWN</div>
           </div>
-          <div class="debug-row">
-            <span class="debug-key">Repository</span>
-            <div style="display:flex;align-items:center;gap:6px">
-              <span id="dbg-repo" class="debug-val"></span>
-              <button class="debug-copy-btn" onclick="dbgCopy('dbg-repo')">copy</button>
+          <div class="debug-health-row">
+            <div class="debug-health-label">
+              <span class="debug-health-icon">⬡</span>
+              <span>Repository</span>
             </div>
+            <div id="hc-repo" class="debug-hc-badge hc-unknown">— UNKNOWN</div>
           </div>
-          <div class="debug-row">
-            <span class="debug-key">Branch / Path</span>
-            <span id="dbg-branch-path" class="debug-val"></span>
-          </div>
-          <div class="debug-row">
-            <span class="debug-key">Config Valid</span>
-            <div class="debug-status">
-              <span id="dbg-cfg-txt" class="debug-val"></span>
-              <span id="dbg-cfg-dot" class="debug-dot"></span>
+          <div class="debug-health-row">
+            <div class="debug-health-label">
+              <span class="debug-health-icon">⬡</span>
+              <span>Data Path</span>
             </div>
+            <div id="hc-path" class="debug-hc-badge hc-unknown">— UNKNOWN</div>
           </div>
+          <div class="debug-health-row">
+            <div class="debug-health-label">
+              <span class="debug-health-icon">⬡</span>
+              <span>Encryption</span>
+            </div>
+            <div id="hc-enc" class="debug-hc-badge hc-unknown">— UNKNOWN</div>
+          </div>
+          <div id="hc-last-checked" style="font-size:10px;color:#999;margin-top:10px;text-align:right">Not checked yet</div>
         </div>
 
+        <!-- SESSION -->
         <div class="debug-section">
           <div class="debug-section-title">Session</div>
           <div class="debug-row">
-            <span class="debug-key">Current User</span>
+            <span class="debug-key">Active User</span>
             <span id="dbg-user" class="debug-val"></span>
           </div>
           <div class="debug-row">
@@ -1585,21 +1628,7 @@ function saveBudget(){
 
 // ── Enterprise Debug Panel ────────────────────────────────────────────────
 function openDebugPanel(){
-  const encOk = !!_encCryptoKey;
-  const cfgValid = cfgOk();
-  const tokenOk = _envToken && _envToken.length > 10;
-
-  // Auth & Config
   const $set = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
-  $set('dbg-token-val', tokenOk ? `✓ ${_envToken.slice(0,8)}… (${_envToken.length} chars)` : '✗ missing');
-  const tDot = document.getElementById('dbg-token-dot');
-  if(tDot){ tDot.className='debug-dot '+(tokenOk?'debug-dot-ok':'debug-dot-err'); }
-  $set('dbg-owner', CFG.owner||'(empty)');
-  $set('dbg-repo',  CFG.repo||'(empty)');
-  $set('dbg-branch-path', `${CFG.branch||'main'} / ${CFG.path||'expenses'}`);
-  $set('dbg-cfg-txt', cfgValid ? '✓ YES' : '✗ NO');
-  const cDot = document.getElementById('dbg-cfg-dot');
-  if(cDot){ cDot.className='debug-dot '+(cfgValid?'debug-dot-ok':'debug-dot-err'); }
 
   // Session
   $set('dbg-user',          currentUser||'(not logged in)');
@@ -1608,20 +1637,21 @@ function openDebugPanel(){
   $set('dbg-months-cached', Object.keys(CACHE).length + ' months');
   $set('dbg-budget',        fmt(BUDGETS.monthly||50000) + ' / month');
 
-  // Encryption
+  // Encryption badge (right column)
+  const encOk = !!_encCryptoKey;
   const encBadge = document.getElementById('dbg-enc-badge');
   if(encBadge){
-    encBadge.textContent   = encOk ? '🔒 ENABLED' : '⚠ DISABLED';
-    encBadge.className     = 'debug-enc-badge ' + (encOk?'debug-enc-ok':'debug-enc-off');
+    encBadge.textContent = encOk ? '\uD83D\uDD12 ENABLED' : '\u26a0 DISABLED';
+    encBadge.className   = 'debug-enc-badge ' + (encOk ? 'debug-enc-ok' : 'debug-enc-off');
   }
-  $set('dbg-enc-fp', _encKeyHex ? _encKeyHex.slice(0,8)+'…'+_encKeyHex.slice(-4) : '—');
+  $set('dbg-enc-fp', _encKeyHex ? _encKeyHex.slice(0,8)+'\u2026'+_encKeyHex.slice(-4) : '\u2014');
 
   // System
   let lsSize = 0;
   try { for(let k in localStorage) if(localStorage.hasOwnProperty(k)) lsSize+=localStorage[k].length; } catch(e){}
   $set('dbg-ls-size',  (lsSize/1024).toFixed(1)+' KB');
-  $set('dbg-ua',       navigator.userAgent.slice(0,80)+'…');
-  $set('dbg-screen',   `${window.innerWidth}×${window.innerHeight} (${window.devicePixelRatio}x)`);
+  $set('dbg-ua',       navigator.userAgent.slice(0,80)+'\u2026');
+  $set('dbg-screen',   window.innerWidth+'\xd7'+window.innerHeight+' ('+window.devicePixelRatio+'x)');
   $set('dbg-ts',       new Date().toISOString());
 
   // Error
@@ -1631,6 +1661,67 @@ function openDebugPanel(){
 
   document.getElementById('debugPanel').classList.add('active');
   initLucideIcons();
+}
+
+// Health Check
+function hcSet(id, state, label, detail){
+  const el = document.getElementById(id);
+  if(!el) return;
+  const dot = { ok:'\u25cf', warn:'\u25cf', fail:'\u25cf', checking:'\u25cc', unknown:'\u2014' };
+  el.className = 'debug-hc-badge hc-' + state;
+  el.textContent = (dot[state]||'\u2014') + ' ' + label + (detail ? '  ' + detail : '');
+}
+
+async function runHealthCheck(){
+  const btn = document.getElementById('dbg-run-btn');
+  if(btn){ btn.textContent = 'Checking\u2026'; btn.disabled = true; }
+  ['hc-github','hc-auth','hc-repo','hc-path','hc-enc'].forEach(id => hcSet(id,'checking','CHECKING'));
+
+  const ms2s = ms => ms < 1000 ? ms+'ms' : (ms/1000).toFixed(1)+'s';
+
+  // 1. GitHub API reachability
+  try {
+    const t0 = Date.now();
+    const r = await fetch('https://api.github.com');
+    const ms = Date.now()-t0;
+    hcSet('hc-github', r.ok?'ok':'warn', r.ok?'OPERATIONAL':'DEGRADED', ms2s(ms));
+  } catch(e){ hcSet('hc-github','fail','UNREACHABLE'); }
+
+  // 2-4. Auth, Repo, Path (requires config)
+  if(!cfgOk()){
+    hcSet('hc-auth','fail','NOT CONFIGURED');
+    hcSet('hc-repo','fail','SKIPPED');
+    hcSet('hc-path','fail','SKIPPED');
+  } else {
+    try {
+      const t0 = Date.now();
+      const r = await fetch('https://api.github.com/user',{headers:{Authorization:'token '+CFG.token}});
+      const ms = Date.now()-t0;
+      if(r.ok) hcSet('hc-auth','ok','AUTHENTICATED',ms2s(ms));
+      else if(r.status===401) hcSet('hc-auth','fail','INVALID TOKEN');
+      else hcSet('hc-auth','warn','HTTP '+r.status,ms2s(ms));
+    } catch(e){ hcSet('hc-auth','fail','NETWORK ERROR'); }
+
+    try {
+      const t0 = Date.now();
+      const r = await fetch('https://api.github.com/repos/'+CFG.owner+'/'+CFG.repo,{headers:{Authorization:'token '+CFG.token}});
+      const ms = Date.now()-t0;
+      if(r.ok) hcSet('hc-repo','ok','ACCESSIBLE',ms2s(ms));
+      else if(r.status===404) hcSet('hc-repo','fail','NOT FOUND');
+      else if(r.status===403) hcSet('hc-repo','fail','FORBIDDEN');
+      else hcSet('hc-repo','warn','HTTP '+r.status,ms2s(ms));
+    } catch(e){ hcSet('hc-repo','fail','NETWORK ERROR'); }
+
+    hcSet('hc-path', (CFG.path&&currentUser)?'ok':'warn', (CFG.path&&currentUser)?'VALID':'INCOMPLETE');
+  }
+
+  // 5. Encryption
+  const encOk = !!_encCryptoKey;
+  hcSet('hc-enc', encOk?'ok':'fail', encOk?'AES-256-GCM ACTIVE':'KEY NOT LOADED');
+
+  const el = document.getElementById('hc-last-checked');
+  if(el) el.textContent = 'Last checked: ' + new Date().toLocaleTimeString();
+  if(btn){ btn.textContent = 'Run Check'; btn.disabled = false; }
 }
 
 function closeDebugPanel(){
