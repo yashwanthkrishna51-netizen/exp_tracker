@@ -599,6 +599,68 @@ body {
   }
 }
 }
+
+/* ── Enterprise Debug Panel ── */
+.debug-modal {
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 48px rgba(0,0,0,0.25);
+  border: 1px solid var(--border-medium);
+}
+.debug-header {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.debug-header-left {display: flex; align-items: center; gap: 10px;}
+.debug-title {font-size: 15px; font-weight: 700; letter-spacing: 0.3px; font-family: monospace;}
+.debug-badge {
+  font-size: 10px; font-weight: 700; padding: 2px 8px;
+  border-radius: 99px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.debug-badge-live { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
+.debug-section { padding: 16px 24px; border-bottom: 1px solid var(--border-light); }
+.debug-section-title {
+  font-size: 10px; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 12px;
+}
+.debug-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 0; gap: 12px;
+}
+.debug-row + .debug-row { border-top: 1px solid var(--border-light); }
+.debug-key { font-size: 12px; color: var(--text-secondary); font-weight: 600; min-width: 120px; flex-shrink: 0; }
+.debug-val { font-family: monospace; font-size: 12px; color: var(--text-primary); flex: 1; text-align: right; word-break: break-all; }
+.debug-status { display: flex; align-items: center; gap: 6px; font-family: monospace; font-size: 12px; justify-content: flex-end; }
+.debug-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.debug-dot-ok  { background: #10b981; box-shadow: 0 0 6px rgba(16,185,129,0.6); }
+.debug-dot-err { background: #ef4444; box-shadow: 0 0 6px rgba(239,68,68,0.6); }
+.debug-dot-warn{ background: #f59e0b; box-shadow: 0 0 6px rgba(245,158,11,0.6); }
+.debug-copy-btn {
+  background: var(--bg-secondary); border: 1px solid var(--border-light);
+  border-radius: 4px; padding: 2px 8px; font-size: 10px; color: var(--text-secondary);
+  cursor: pointer; font-family: monospace; transition: all 0.15s; flex-shrink: 0;
+}
+.debug-copy-btn:hover { background: var(--accent-light); color: var(--accent-primary); border-color: var(--accent-primary); }
+.debug-actions {
+  padding: 16px 24px; display: flex; gap: 10px;
+  background: var(--bg-elevated); border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+.debug-actions .btn { flex: 1; justify-content: center; font-size: 13px; padding: 9px 12px; }
+.debug-enc-badge {
+  font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 99px;
+  letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap;
+}
+.debug-enc-ok  { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
+.debug-enc-off { background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.25); }
 </style>
 </head>
 <body>
@@ -797,42 +859,144 @@ body {
   </div>
 </div>
 
-<!-- Debug Panel -->
-<button class="debug-button" id="debugBtn" onclick="openDebugPanel()">
-  🐛
-</button>
+<button class="debug-button" id="debugBtn" onclick="openDebugPanel()">🐛</button>
 
+<!-- Enterprise Debug Panel -->
 <div class="modal-overlay" id="debugPanel">
-  <div class="modal">
-    <div class="modal-header">
-      <h2 class="modal-title">Debug Panel</h2>
+  <div class="debug-modal">
+    <div class="debug-header">
+      <div class="debug-header-left">
+        <span style="font-size:18px">🐛</span>
+        <span class="debug-title">expense.io / diagnostics</span>
+        <span class="debug-badge debug-badge-live">● LIVE</span>
+      </div>
       <button class="modal-close" onclick="closeDebugPanel()">×</button>
     </div>
-    <div class="modal-body" style="font-family:monospace;font-size:12px">
-      <div style="margin-bottom:12px">
-        <strong>Token:</strong> <span id="debugToken">...</span>
+
+    <!-- Auth & Config -->
+    <div class="debug-section">
+      <div class="debug-section-title">Auth &amp; Configuration</div>
+      <div class="debug-row">
+        <span class="debug-key">GitHub Token</span>
+        <div class="debug-status">
+          <span id="dbg-token-val" class="debug-val"></span>
+          <span id="dbg-token-dot" class="debug-dot"></span>
+        </div>
       </div>
-      <div style="margin-bottom:12px">
-        <strong>Owner:</strong> <span id="debugOwner">...</span>
+      <div class="debug-row">
+        <span class="debug-key">Owner</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span id="dbg-owner" class="debug-val"></span>
+          <button class="debug-copy-btn" onclick="dbgCopy('dbg-owner')">copy</button>
+        </div>
       </div>
-      <div style="margin-bottom:12px">
-        <strong>Repo:</strong> <span id="debugRepo">...</span>
+      <div class="debug-row">
+        <span class="debug-key">Repository</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span id="dbg-repo" class="debug-val"></span>
+          <button class="debug-copy-btn" onclick="dbgCopy('dbg-repo')">copy</button>
+        </div>
       </div>
-      <div style="margin-bottom:12px">
-        <strong>Config Valid:</strong> <span id="debugCfgOk">...</span>
+      <div class="debug-row">
+        <span class="debug-key">Branch / Path</span>
+        <span id="dbg-branch-path" class="debug-val"></span>
       </div>
-      <div style="margin-bottom:12px">
-        <strong>Current User:</strong> <span id="debugUser">...</span>
+      <div class="debug-row">
+        <span class="debug-key">Config Valid</span>
+        <div class="debug-status">
+          <span id="dbg-cfg-txt" class="debug-val"></span>
+          <span id="dbg-cfg-dot" class="debug-dot"></span>
+        </div>
       </div>
-      <div style="margin-bottom:12px">
-        <strong>Entries:</strong> <span id="debugEntries">...</span>
+    </div>
+
+    <!-- Session -->
+    <div class="debug-section">
+      <div class="debug-section-title">Session</div>
+      <div class="debug-row">
+        <span class="debug-key">Current User</span>
+        <span id="dbg-user" class="debug-val"></span>
       </div>
-      <div style="margin-bottom:12px">
-        <strong>Error:</strong> <span id="debugError" style="color:var(--danger)">None</span>
+      <div class="debug-row">
+        <span class="debug-key">Active Month</span>
+        <span id="dbg-month" class="debug-val"></span>
       </div>
-      <button class="btn btn-primary" onclick="debugSyncNow()" style="width:100%;justify-content:center;margin-top:12px">
-        <i data-lucide="refresh-cw"></i>
-        Sync Now
+      <div class="debug-row">
+        <span class="debug-key">Entries (month)</span>
+        <span id="dbg-entries" class="debug-val"></span>
+      </div>
+      <div class="debug-row">
+        <span class="debug-key">Total Months</span>
+        <span id="dbg-months-cached" class="debug-val"></span>
+      </div>
+      <div class="debug-row">
+        <span class="debug-key">Budget</span>
+        <span id="dbg-budget" class="debug-val"></span>
+      </div>
+    </div>
+
+    <!-- Encryption -->
+    <div class="debug-section">
+      <div class="debug-section-title">Encryption</div>
+      <div class="debug-row">
+        <span class="debug-key">Status</span>
+        <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end">
+          <span id="dbg-enc-badge" class="debug-enc-badge"></span>
+        </div>
+      </div>
+      <div class="debug-row">
+        <span class="debug-key">Algorithm</span>
+        <span class="debug-val">AES-256-GCM</span>
+      </div>
+      <div class="debug-row">
+        <span class="debug-key">Key Source</span>
+        <span class="debug-val">/api/config → ENC_KEY</span>
+      </div>
+      <div class="debug-row">
+        <span class="debug-key">Key Fingerprint</span>
+        <span id="dbg-enc-fp" class="debug-val">—</span>
+      </div>
+    </div>
+
+    <!-- System -->
+    <div class="debug-section">
+      <div class="debug-section-title">System</div>
+      <div class="debug-row">
+        <span class="debug-key">localStorage</span>
+        <span id="dbg-ls-size" class="debug-val"></span>
+      </div>
+      <div class="debug-row">
+        <span class="debug-key">User Agent</span>
+        <span id="dbg-ua" class="debug-val" style="font-size:10px"></span>
+      </div>
+      <div class="debug-row">
+        <span class="debug-key">Screen</span>
+        <span id="dbg-screen" class="debug-val"></span>
+      </div>
+      <div class="debug-row">
+        <span class="debug-key">Timestamp</span>
+        <span id="dbg-ts" class="debug-val"></span>
+      </div>
+    </div>
+
+    <!-- Last Error -->
+    <div class="debug-section">
+      <div class="debug-section-title">Last Error</div>
+      <div class="debug-row">
+        <span id="dbg-error" style="font-family:monospace;font-size:12px;color:var(--danger);word-break:break-all;flex:1">None</span>
+        <button class="debug-copy-btn" onclick="dbgCopy('dbg-error')">copy</button>
+      </div>
+    </div>
+
+    <div class="debug-actions">
+      <button class="btn btn-primary" onclick="debugSyncNow()">
+        <i data-lucide="refresh-cw"></i> Sync Now
+      </button>
+      <button class="btn btn-secondary" onclick="debugClearCache()">
+        <i data-lucide="trash-2"></i> Clear Cache
+      </button>
+      <button class="btn btn-secondary" onclick="openDebugPanel()">
+        <i data-lucide="rotate-ccw"></i> Refresh
       </button>
     </div>
   </div>
@@ -858,6 +1022,49 @@ let idleTimer=null;
 let idleTimeout=5*60*1000;
 let CACHE=JSON.parse(localStorage.getItem('spent_cache')||'{}');
 let BUDGETS=JSON.parse(localStorage.getItem('spent_budgets')||'{"monthly":50000,"categories":{}}');
+
+// ── Encryption (AES-256-GCM) ──────────────────────────────────────────────
+let _encCryptoKey = null;   // CryptoKey object
+let _encKeyHex    = null;   // raw 64-char hex (for fingerprint display)
+
+async function fetchEncryptionKey(){
+  try {
+    const res = await fetch('/api/config');
+    if(!res.ok) return;
+    const { encryptionKey } = await res.json();
+    if(!encryptionKey || encryptionKey.length !== 64) return;
+    _encKeyHex = encryptionKey;
+    const keyBytes = new Uint8Array(encryptionKey.match(/.{2}/g).map(h=>parseInt(h,16)));
+    _encCryptoKey = await crypto.subtle.importKey('raw', keyBytes, {name:'AES-GCM'}, false, ['encrypt','decrypt']);
+  } catch(e) { console.warn('Encryption key unavailable:', e.message); }
+}
+
+async function encryptJSON(obj){
+  if(!_encCryptoKey) return JSON.stringify(obj);
+  const iv  = crypto.getRandomValues(new Uint8Array(12));
+  const enc = new TextEncoder().encode(JSON.stringify(obj));
+  const buf = await crypto.subtle.encrypt({name:'AES-GCM',iv}, _encCryptoKey, enc);
+  return JSON.stringify({
+    _enc: true,
+    iv:   btoa(String.fromCharCode(...iv)),
+    data: btoa(String.fromCharCode(...new Uint8Array(buf)))
+  });
+}
+
+async function decryptJSON(str){
+  try {
+    const parsed = JSON.parse(str);
+    if(!parsed._enc) return parsed;           // plaintext fallback
+    if(!_encCryptoKey) throw new Error('No encryption key to decrypt');
+    const iv   = Uint8Array.from(atob(parsed.iv),   c=>c.charCodeAt(0));
+    const data = Uint8Array.from(atob(parsed.data),  c=>c.charCodeAt(0));
+    const dec  = await crypto.subtle.decrypt({name:'AES-GCM',iv}, _encCryptoKey, data);
+    return JSON.parse(new TextDecoder().decode(dec));
+  } catch(e) {
+    // Try plain JSON as fallback (unencrypted legacy data)
+    return JSON.parse(str);
+  }
+}
 const _saved=JSON.parse(localStorage.getItem('spent_cfg')||'{}');
 let CFG={owner:_saved.owner||DEFAULTS.owner,repo:_saved.repo||DEFAULTS.repo,token:_envToken||_saved.token||'',branch:_saved.branch||DEFAULTS.branch,path:_saved.path||DEFAULTS.path};
 
@@ -965,15 +1172,16 @@ async function syncMonth(m){
     const e=await ghGet(p);
     const l=CACHE[m]||[];
     if(e){
-      const r=JSON.parse(decodeURIComponent(escape(atob(e.content.replace(/\n/g,'')))));
+      const raw=decodeURIComponent(escape(atob(e.content.replace(/\n/g,''))));
+      const r=await decryptJSON(raw);
       const ids=new Set(r.map(x=>x.id));
       const merged=[...r,...l.filter(x=>!ids.has(x.id))];
       merged.sort((a,b)=>a.ts-b.ts);
       CACHE[m]=merged;
       saveCacheLocal();
-      await ghPut(p,JSON.stringify(merged,null,2),e.sha);
+      await ghPut(p,await encryptJSON(merged),e.sha);
     }else{
-      await ghPut(p,JSON.stringify(l,null,2));
+      await ghPut(p,await encryptJSON(l));
     }
     setSync('ok','synced');
     toast('Synced ✓','success');
@@ -991,7 +1199,8 @@ async function loadMonth(m){
   try{
     const e=await ghGet(ghPath(m));
     if(e){
-      const d=JSON.parse(decodeURIComponent(escape(atob(e.content.replace(/\n/g,'')))));
+      const raw=decodeURIComponent(escape(atob(e.content.replace(/\n/g,''))));
+      const d=await decryptJSON(raw);
       CACHE[m]=d;
       saveCacheLocal();
     }
@@ -1231,6 +1440,29 @@ function closeSettingsModal(){
   document.getElementById('settingsModal').classList.remove('active');
 }
 
+// ── Budget Server Persistence ─────────────────────────────────────────────
+async function loadBudgetFromServer(){
+  try {
+    const res = await fetch('/api/budget');
+    if(!res.ok) return;
+    const data = await res.json();
+    if(data.monthly && data.monthly > 0){
+      BUDGETS.monthly = data.monthly;
+      localStorage.setItem('spent_budgets', JSON.stringify(BUDGETS));
+    }
+  } catch(e) { /* offline fallback to localStorage */ }
+}
+
+async function saveBudgetToServer(amount){
+  try {
+    await fetch('/api/budget', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({monthly: amount})
+    });
+  } catch(e) { console.warn('Budget server save failed:', e.message); }
+}
+
 function openBudgetModal(){
   document.getElementById('monthlyBudgetInput').value = BUDGETS.monthly || 50000;
   document.getElementById('budgetModal').classList.add('active');
@@ -1241,36 +1473,92 @@ function closeBudgetModal(){
 }
 
 function saveBudget(){
-  BUDGETS.monthly = parseInt(document.getElementById('monthlyBudgetInput').value) || 50000;
+  const amount = parseInt(document.getElementById('monthlyBudgetInput').value) || 50000;
+  BUDGETS.monthly = amount;
   localStorage.setItem('spent_budgets', JSON.stringify(BUDGETS));
+  saveBudgetToServer(amount);
   closeBudgetModal();
   renderView();
   toast('Budget saved', 'success');
 }
 
-// Debug Panel
+// ── Enterprise Debug Panel ────────────────────────────────────────────────
 function openDebugPanel(){
-  document.getElementById('debugToken').textContent = (_envToken && _envToken.length > 10) ? `✓ ${_envToken.slice(0,8)}... (${_envToken.length} chars)` : '✗ No token';
-  document.getElementById('debugOwner').textContent = CFG.owner || '(empty)';
-  document.getElementById('debugRepo').textContent = CFG.repo || '(empty)';
-  document.getElementById('debugCfgOk').textContent = cfgOk() ? '✓ YES' : '✗ NO';
-  document.getElementById('debugUser').textContent = currentUser || '(not logged in)';
-  document.getElementById('debugEntries').textContent = (CACHE[currentMonth] || []).length;
-  document.getElementById('debugError').textContent = lastDebugError || 'None';
+  const encOk = !!_encCryptoKey;
+  const cfgValid = cfgOk();
+  const tokenOk = _envToken && _envToken.length > 10;
+
+  // Auth & Config
+  const $set = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
+  $set('dbg-token-val', tokenOk ? `✓ ${_envToken.slice(0,8)}… (${_envToken.length} chars)` : '✗ missing');
+  const tDot = document.getElementById('dbg-token-dot');
+  if(tDot){ tDot.className='debug-dot '+(tokenOk?'debug-dot-ok':'debug-dot-err'); }
+  $set('dbg-owner', CFG.owner||'(empty)');
+  $set('dbg-repo',  CFG.repo||'(empty)');
+  $set('dbg-branch-path', `${CFG.branch||'main'} / ${CFG.path||'expenses'}`);
+  $set('dbg-cfg-txt', cfgValid ? '✓ YES' : '✗ NO');
+  const cDot = document.getElementById('dbg-cfg-dot');
+  if(cDot){ cDot.className='debug-dot '+(cfgValid?'debug-dot-ok':'debug-dot-err'); }
+
+  // Session
+  $set('dbg-user',          currentUser||'(not logged in)');
+  $set('dbg-month',         currentMonth);
+  $set('dbg-entries',       (CACHE[currentMonth]||[]).length + ' entries');
+  $set('dbg-months-cached', Object.keys(CACHE).length + ' months');
+  $set('dbg-budget',        fmt(BUDGETS.monthly||50000) + ' / month');
+
+  // Encryption
+  const encBadge = document.getElementById('dbg-enc-badge');
+  if(encBadge){
+    encBadge.textContent   = encOk ? '🔒 ENABLED' : '⚠ DISABLED';
+    encBadge.className     = 'debug-enc-badge ' + (encOk?'debug-enc-ok':'debug-enc-off');
+  }
+  $set('dbg-enc-fp', _encKeyHex ? _encKeyHex.slice(0,8)+'…'+_encKeyHex.slice(-4) : '—');
+
+  // System
+  let lsSize = 0;
+  try { for(let k in localStorage) if(localStorage.hasOwnProperty(k)) lsSize+=localStorage[k].length; } catch(e){}
+  $set('dbg-ls-size',  (lsSize/1024).toFixed(1)+' KB');
+  $set('dbg-ua',       navigator.userAgent.slice(0,80)+'…');
+  $set('dbg-screen',   `${window.innerWidth}×${window.innerHeight} (${window.devicePixelRatio}x)`);
+  $set('dbg-ts',       new Date().toISOString());
+
+  // Error
+  $set('dbg-error', lastDebugError||'None');
+  const errEl = document.getElementById('dbg-error');
+  if(errEl) errEl.style.color = lastDebugError ? 'var(--danger)' : 'var(--success)';
+
   document.getElementById('debugPanel').classList.add('active');
+  initLucideIcons();
 }
 
 function closeDebugPanel(){
   document.getElementById('debugPanel').classList.remove('active');
 }
 
+function dbgCopy(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  navigator.clipboard.writeText(el.textContent).then(()=>toast('Copied','success'));
+}
+
+function debugClearCache(){
+  if(!confirm('Clear local cache? Remote data is unaffected.')) return;
+  CACHE = {};
+  saveCacheLocal();
+  renderView();
+  toast('Cache cleared','success');
+  openDebugPanel();
+}
+
 async function debugSyncNow(){
   try {
     await syncMonth(currentMonth);
-    document.getElementById('debugError').textContent = 'Sync successful!';
-    setTimeout(openDebugPanel, 500);
+    lastDebugError = '';
+    setTimeout(openDebugPanel, 600);
   } catch(err) {
-    document.getElementById('debugError').textContent = err.message;
+    lastDebugError = err.message;
+    openDebugPanel();
   }
 }
 
@@ -2093,6 +2381,9 @@ updateMonthDisplay();
 
 fetchCurrentUser().then(() => {
   initIdleTimer();
+  // Fetch encryption key and budget in parallel, then sync
+  return Promise.all([fetchEncryptionKey(), loadBudgetFromServer()]);
+}).then(() => {
   if(cfgOk()){
     setSync('syncing','loading…');
     loadMonth(currentMonth).then(()=>renderView());
