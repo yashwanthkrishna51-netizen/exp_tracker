@@ -552,15 +552,17 @@ body {
 }
 .debug-button {
   position: fixed;
-  top: 80px;
-  left: 280px;
+  bottom: 32px;
+  right: 32px;
+  top: auto;
+  left: auto;
   width: 40px;
   height: 40px;
   border-radius: 50%;
   background: var(--accent-primary);
   color: white;
   border: none;
-  font-size: 18px;
+  font-size: 20px;
   box-shadow: var(--shadow-md);
   cursor: pointer;
   z-index: 999;
@@ -582,9 +584,8 @@ body {
   .filters-bar {flex-direction: column;}
   .filter-group {width: 100%;}
   .debug-button {
-    top: auto;
-    bottom: 90px;
-    left: 20px;
+    bottom: 32px;
+    right: 32px;
     width: 44px;
     height: 44px;
   }
@@ -798,7 +799,7 @@ body {
 
 <!-- Debug Panel -->
 <button class="debug-button" id="debugBtn" onclick="openDebugPanel()">
-  <i data-lucide="bug"></i>
+  🐛
 </button>
 
 <div class="modal-overlay" id="debugPanel">
