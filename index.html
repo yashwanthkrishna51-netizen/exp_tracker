@@ -601,68 +601,145 @@ body {
 }
 
 /* ── Enterprise Debug Panel ── */
-.debug-modal {
-  background: var(--bg-elevated);
-  border-radius: var(--radius-lg);
-  width: 100%;
-  max-width: 560px;
-  max-height: 85vh;
+.debug-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
   overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior: contain;
-  box-shadow: 0 24px 48px rgba(0,0,0,0.25);
-  border: 1px solid var(--border-medium);
 }
+.debug-overlay.active { display: flex; }
+
+.debug-modal {
+  background: #ffffff;
+  color: #0a0a0a;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 880px;
+  box-shadow: 0 32px 64px rgba(0,0,0,0.4);
+  border: 1px solid #d0d0d0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 88vh;
+  position: relative;
+}
+[data-theme="dark"] .debug-modal {
+  background: #141414;
+  color: #f0f0f0;
+  border-color: #2e2e2e;
+}
+
+/* Header */
 .debug-header {
-  padding: 18px 24px;
-  border-bottom: 1px solid var(--border-light);
+  padding: 16px 24px;
+  border-bottom: 1px solid #e0e0e0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--bg-elevated);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: #f5f5f5;
+  flex-shrink: 0;
 }
-.debug-header-left {display: flex; align-items: center; gap: 10px;}
-.debug-title {font-size: 15px; font-weight: 700; letter-spacing: 0.3px; font-family: monospace;}
+[data-theme="dark"] .debug-header {
+  background: #1e1e1e;
+  border-bottom-color: #2e2e2e;
+}
+.debug-header-left { display: flex; align-items: center; gap: 10px; }
+.debug-title { font-size: 14px; font-weight: 700; letter-spacing: 0.3px; font-family: monospace; color: inherit; }
 .debug-badge {
   font-size: 10px; font-weight: 700; padding: 2px 8px;
   border-radius: 99px; letter-spacing: 0.5px; text-transform: uppercase;
 }
-.debug-badge-live { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
-.debug-section { padding: 16px 24px; border-bottom: 1px solid var(--border-light); }
-.debug-section-title {
-  font-size: 10px; font-weight: 700; letter-spacing: 1px;
-  text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 12px;
+.debug-badge-live { background: rgba(16,185,129,0.18); color: #059669; border: 1px solid rgba(16,185,129,0.35); }
+[data-theme="dark"] .debug-badge-live { color: #10b981; }
+
+/* Body — 2-col on desktop, 1-col on mobile */
+.debug-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  flex: 1;
+  min-height: 0;
 }
+.debug-col { display: flex; flex-direction: column; }
+.debug-col:first-child { border-right: 1px solid #e0e0e0; }
+[data-theme="dark"] .debug-col:first-child { border-right-color: #2e2e2e; }
+
+.debug-section {
+  padding: 14px 20px;
+  border-bottom: 1px solid #ebebeb;
+  background: #ffffff;
+}
+[data-theme="dark"] .debug-section {
+  background: #141414;
+  border-bottom-color: #242424;
+}
+.debug-section-title {
+  font-size: 9px; font-weight: 800; letter-spacing: 1.2px;
+  text-transform: uppercase; color: #999; margin-bottom: 10px;
+}
+[data-theme="dark"] .debug-section-title { color: #555; }
+
 .debug-row {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 7px 0; gap: 12px;
+  padding: 6px 0; gap: 8px;
 }
-.debug-row + .debug-row { border-top: 1px solid var(--border-light); }
-.debug-key { font-size: 12px; color: var(--text-secondary); font-weight: 600; min-width: 120px; flex-shrink: 0; }
-.debug-val { font-family: monospace; font-size: 12px; color: var(--text-primary); flex: 1; text-align: right; word-break: break-all; }
-.debug-status { display: flex; align-items: center; gap: 6px; font-family: monospace; font-size: 12px; justify-content: flex-end; }
+.debug-row + .debug-row { border-top: 1px solid #f0f0f0; }
+[data-theme="dark"] .debug-row + .debug-row { border-top-color: #222; }
+
+.debug-key { font-size: 11px; color: #666; font-weight: 600; min-width: 100px; flex-shrink: 0; }
+[data-theme="dark"] .debug-key { color: #888; }
+.debug-val { font-family: monospace; font-size: 11px; color: #0a0a0a; flex: 1; text-align: right; word-break: break-all; }
+[data-theme="dark"] .debug-val { color: #e0e0e0; }
+
+.debug-status { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
 .debug-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.debug-dot-ok  { background: #10b981; box-shadow: 0 0 6px rgba(16,185,129,0.6); }
-.debug-dot-err { background: #ef4444; box-shadow: 0 0 6px rgba(239,68,68,0.6); }
-.debug-dot-warn{ background: #f59e0b; box-shadow: 0 0 6px rgba(245,158,11,0.6); }
+.debug-dot-ok   { background: #10b981; box-shadow: 0 0 5px rgba(16,185,129,0.7); }
+.debug-dot-err  { background: #ef4444; box-shadow: 0 0 5px rgba(239,68,68,0.7); }
+.debug-dot-warn { background: #f59e0b; box-shadow: 0 0 5px rgba(245,158,11,0.7); }
+
 .debug-copy-btn {
-  background: var(--bg-secondary); border: 1px solid var(--border-light);
-  border-radius: 4px; padding: 2px 8px; font-size: 10px; color: var(--text-secondary);
+  background: #f0f0f0; border: 1px solid #ddd;
+  border-radius: 4px; padding: 2px 7px; font-size: 10px; color: #666;
   cursor: pointer; font-family: monospace; transition: all 0.15s; flex-shrink: 0;
 }
-.debug-copy-btn:hover { background: var(--accent-light); color: var(--accent-primary); border-color: var(--accent-primary); }
-.debug-actions {
-  padding: 16px 24px; display: flex; gap: 10px;
-  background: var(--bg-elevated); border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-}
-.debug-actions .btn { flex: 1; justify-content: center; font-size: 13px; padding: 9px 12px; }
+[data-theme="dark"] .debug-copy-btn { background: #252525; border-color: #333; color: #888; }
+.debug-copy-btn:hover { background: #fff0eb; color: #FF6B35; border-color: #FF6B35; }
+
 .debug-enc-badge {
   font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 99px;
   letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap;
 }
-.debug-enc-ok  { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
-.debug-enc-off { background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.25); }
+.debug-enc-ok  { background: rgba(16,185,129,0.12); color: #059669; border: 1px solid rgba(16,185,129,0.3); }
+.debug-enc-off { background: rgba(239,68,68,0.10); color: #dc2626; border: 1px solid rgba(239,68,68,0.25); }
+[data-theme="dark"] .debug-enc-ok  { color: #10b981; }
+[data-theme="dark"] .debug-enc-off { color: #f87171; }
+
+/* Actions bar */
+.debug-actions {
+  padding: 14px 20px; display: flex; gap: 10px; flex-shrink: 0;
+  background: #f5f5f5; border-top: 1px solid #e0e0e0;
+}
+[data-theme="dark"] .debug-actions { background: #1e1e1e; border-top-color: #2e2e2e; }
+.debug-actions .btn { flex: 1; justify-content: center; font-size: 13px; padding: 9px 10px; }
+
+/* Mobile: portrait — single column */
+@media (max-width: 640px) {
+  .debug-overlay { padding: 0; align-items: flex-end; }
+  .debug-modal {
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    max-height: 92vh;
+  }
+  .debug-body { grid-template-columns: 1fr; }
+  .debug-col:first-child { border-right: none; border-bottom: 1px solid #e0e0e0; }
+  [data-theme="dark"] .debug-col:first-child { border-bottom-color: #2e2e2e; }
+}
 </style>
 </head>
 <body>
@@ -864,129 +941,135 @@ body {
 <button class="debug-button" id="debugBtn" onclick="openDebugPanel()">🐛</button>
 
 <!-- Enterprise Debug Panel -->
-<div class="modal-overlay" id="debugPanel">
+<div class="debug-overlay" id="debugPanel">
   <div class="debug-modal">
+
     <div class="debug-header">
       <div class="debug-header-left">
         <span style="font-size:18px">🐛</span>
         <span class="debug-title">expense.io / diagnostics</span>
         <span class="debug-badge debug-badge-live">● LIVE</span>
       </div>
-      <button class="modal-close" onclick="closeDebugPanel()">×</button>
+      <button class="modal-close" onclick="closeDebugPanel()" style="color:inherit">×</button>
     </div>
 
-    <!-- Auth & Config -->
-    <div class="debug-section">
-      <div class="debug-section-title">Auth &amp; Configuration</div>
-      <div class="debug-row">
-        <span class="debug-key">GitHub Token</span>
-        <div class="debug-status">
-          <span id="dbg-token-val" class="debug-val"></span>
-          <span id="dbg-token-dot" class="debug-dot"></span>
-        </div>
-      </div>
-      <div class="debug-row">
-        <span class="debug-key">Owner</span>
-        <div style="display:flex;align-items:center;gap:6px">
-          <span id="dbg-owner" class="debug-val"></span>
-          <button class="debug-copy-btn" onclick="dbgCopy('dbg-owner')">copy</button>
-        </div>
-      </div>
-      <div class="debug-row">
-        <span class="debug-key">Repository</span>
-        <div style="display:flex;align-items:center;gap:6px">
-          <span id="dbg-repo" class="debug-val"></span>
-          <button class="debug-copy-btn" onclick="dbgCopy('dbg-repo')">copy</button>
-        </div>
-      </div>
-      <div class="debug-row">
-        <span class="debug-key">Branch / Path</span>
-        <span id="dbg-branch-path" class="debug-val"></span>
-      </div>
-      <div class="debug-row">
-        <span class="debug-key">Config Valid</span>
-        <div class="debug-status">
-          <span id="dbg-cfg-txt" class="debug-val"></span>
-          <span id="dbg-cfg-dot" class="debug-dot"></span>
-        </div>
-      </div>
-    </div>
+    <div class="debug-body">
+      <!-- LEFT COLUMN -->
+      <div class="debug-col">
 
-    <!-- Session -->
-    <div class="debug-section">
-      <div class="debug-section-title">Session</div>
-      <div class="debug-row">
-        <span class="debug-key">Current User</span>
-        <span id="dbg-user" class="debug-val"></span>
-      </div>
-      <div class="debug-row">
-        <span class="debug-key">Active Month</span>
-        <span id="dbg-month" class="debug-val"></span>
-      </div>
-      <div class="debug-row">
-        <span class="debug-key">Entries (month)</span>
-        <span id="dbg-entries" class="debug-val"></span>
-      </div>
-      <div class="debug-row">
-        <span class="debug-key">Total Months</span>
-        <span id="dbg-months-cached" class="debug-val"></span>
-      </div>
-      <div class="debug-row">
-        <span class="debug-key">Budget</span>
-        <span id="dbg-budget" class="debug-val"></span>
-      </div>
-    </div>
-
-    <!-- Encryption -->
-    <div class="debug-section">
-      <div class="debug-section-title">Encryption</div>
-      <div class="debug-row">
-        <span class="debug-key">Status</span>
-        <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end">
-          <span id="dbg-enc-badge" class="debug-enc-badge"></span>
+        <div class="debug-section">
+          <div class="debug-section-title">Auth &amp; Configuration</div>
+          <div class="debug-row">
+            <span class="debug-key">GitHub Token</span>
+            <div class="debug-status">
+              <span id="dbg-token-val" class="debug-val"></span>
+              <span id="dbg-token-dot" class="debug-dot"></span>
+            </div>
+          </div>
+          <div class="debug-row">
+            <span class="debug-key">Owner</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span id="dbg-owner" class="debug-val"></span>
+              <button class="debug-copy-btn" onclick="dbgCopy('dbg-owner')">copy</button>
+            </div>
+          </div>
+          <div class="debug-row">
+            <span class="debug-key">Repository</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span id="dbg-repo" class="debug-val"></span>
+              <button class="debug-copy-btn" onclick="dbgCopy('dbg-repo')">copy</button>
+            </div>
+          </div>
+          <div class="debug-row">
+            <span class="debug-key">Branch / Path</span>
+            <span id="dbg-branch-path" class="debug-val"></span>
+          </div>
+          <div class="debug-row">
+            <span class="debug-key">Config Valid</span>
+            <div class="debug-status">
+              <span id="dbg-cfg-txt" class="debug-val"></span>
+              <span id="dbg-cfg-dot" class="debug-dot"></span>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="debug-row">
-        <span class="debug-key">Algorithm</span>
-        <span class="debug-val">AES-256-GCM</span>
-      </div>
-      <div class="debug-row">
-        <span class="debug-key">Key Source</span>
-        <span class="debug-val">/api/config → ENC_KEY</span>
-      </div>
-      <div class="debug-row">
-        <span class="debug-key">Key Fingerprint</span>
-        <span id="dbg-enc-fp" class="debug-val">—</span>
-      </div>
-    </div>
 
-    <!-- System -->
-    <div class="debug-section">
-      <div class="debug-section-title">System</div>
-      <div class="debug-row">
-        <span class="debug-key">localStorage</span>
-        <span id="dbg-ls-size" class="debug-val"></span>
-      </div>
-      <div class="debug-row">
-        <span class="debug-key">User Agent</span>
-        <span id="dbg-ua" class="debug-val" style="font-size:10px"></span>
-      </div>
-      <div class="debug-row">
-        <span class="debug-key">Screen</span>
-        <span id="dbg-screen" class="debug-val"></span>
-      </div>
-      <div class="debug-row">
-        <span class="debug-key">Timestamp</span>
-        <span id="dbg-ts" class="debug-val"></span>
-      </div>
-    </div>
+        <div class="debug-section">
+          <div class="debug-section-title">Session</div>
+          <div class="debug-row">
+            <span class="debug-key">Current User</span>
+            <span id="dbg-user" class="debug-val"></span>
+          </div>
+          <div class="debug-row">
+            <span class="debug-key">Active Month</span>
+            <span id="dbg-month" class="debug-val"></span>
+          </div>
+          <div class="debug-row">
+            <span class="debug-key">Entries (month)</span>
+            <span id="dbg-entries" class="debug-val"></span>
+          </div>
+          <div class="debug-row">
+            <span class="debug-key">Total Months</span>
+            <span id="dbg-months-cached" class="debug-val"></span>
+          </div>
+          <div class="debug-row">
+            <span class="debug-key">Budget</span>
+            <span id="dbg-budget" class="debug-val"></span>
+          </div>
+        </div>
 
-    <!-- Last Error -->
-    <div class="debug-section">
-      <div class="debug-section-title">Last Error</div>
-      <div class="debug-row">
-        <span id="dbg-error" style="font-family:monospace;font-size:12px;color:var(--danger);word-break:break-all;flex:1">None</span>
-        <button class="debug-copy-btn" onclick="dbgCopy('dbg-error')">copy</button>
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <div class="debug-col">
+
+        <div class="debug-section">
+          <div class="debug-section-title">Encryption</div>
+          <div class="debug-row">
+            <span class="debug-key">Status</span>
+            <span id="dbg-enc-badge" class="debug-enc-badge"></span>
+          </div>
+          <div class="debug-row">
+            <span class="debug-key">Algorithm</span>
+            <span class="debug-val">AES-256-GCM</span>
+          </div>
+          <div class="debug-row">
+            <span class="debug-key">Key Source</span>
+            <span class="debug-val">/api/config → ENC_KEY</span>
+          </div>
+          <div class="debug-row">
+            <span class="debug-key">Key Fingerprint</span>
+            <span id="dbg-enc-fp" class="debug-val">—</span>
+          </div>
+        </div>
+
+        <div class="debug-section">
+          <div class="debug-section-title">System</div>
+          <div class="debug-row">
+            <span class="debug-key">localStorage</span>
+            <span id="dbg-ls-size" class="debug-val"></span>
+          </div>
+          <div class="debug-row">
+            <span class="debug-key">User Agent</span>
+            <span id="dbg-ua" class="debug-val" style="font-size:10px"></span>
+          </div>
+          <div class="debug-row">
+            <span class="debug-key">Screen</span>
+            <span id="dbg-screen" class="debug-val"></span>
+          </div>
+          <div class="debug-row">
+            <span class="debug-key">Timestamp</span>
+            <span id="dbg-ts" class="debug-val"></span>
+          </div>
+        </div>
+
+        <div class="debug-section">
+          <div class="debug-section-title">Last Error</div>
+          <div class="debug-row">
+            <span id="dbg-error" style="font-family:monospace;font-size:11px;color:#ef4444;word-break:break-all;flex:1">None</span>
+            <button class="debug-copy-btn" onclick="dbgCopy('dbg-error')">copy</button>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -1001,6 +1084,7 @@ body {
         <i data-lucide="rotate-ccw"></i> Refresh
       </button>
     </div>
+
   </div>
 </div>
 
