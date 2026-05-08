@@ -1168,6 +1168,7 @@ body {
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://unpkg.com/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="https://unpkg.com/lucide@0.294.0/dist/umd/lucide.min.js" defer onload="typeof initLucideIcons==='function'&&initLucideIcons()"></script>
 <script>
 // Core Data & Config - PRESERVE ALL AUTH
@@ -2024,7 +2025,81 @@ function renderTopCategories(entries){
     </div>
   `).join('');
 }
+function renderExpensesPhonePe(){
+  // Restore staging area state if transactions exist
+  setTimeout(() => {
+    if(ppTransactions.length && document.getElementById('ppTableBody')) {
+      ppRenderStaging();
+    }
+    initLucideIcons();
+  }, 50);
+  return `
+    <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid var(--border-light)">
+      <button onclick="window._expTab=\'list\';renderView()" style="padding:10px 20px;border:none;background:none;font-weight:500;font-size:14px;cursor:pointer;color:var(--text-secondary);border-bottom:2px solid transparent;margin-bottom:-2px;font-family:inherit">
+        Transactions
+      </button>
+      <button onclick="window._expTab=\'phonepe\';renderView()" style="padding:10px 20px;border:none;background:none;font-weight:700;font-size:14px;cursor:pointer;border-bottom:2px solid var(--accent-primary);margin-bottom:-2px;color:var(--accent-primary);font-family:inherit">
+        📱 PhonePe Import
+      </button>
+    </div>
+
+    <div class="widget" id="ppImportWidget">
+      <div class="widget-header">
+        <div class="widget-title">📱 Import from PhonePe</div>
+        <div style="font-size:12px;color:var(--text-tertiary)">PhonePe app → Profile → Transaction History → Download Statement</div>
+      </div>
+
+      <div class="pp-upload-zone" id="ppDropZone"
+           onclick="document.getElementById(\'ppFileInput\').click()"
+           ondragover="event.preventDefault();this.classList.add(\'drag-over\')"
+           ondragleave="this.classList.remove(\'drag-over\')"
+           ondrop="event.preventDefault();this.classList.remove(\'drag-over\');handlePPFile(event.dataTransfer.files[0])">
+        <div style="font-size:36px;margin-bottom:8px">📄</div>
+        <div style="font-weight:600;margin-bottom:4px">Drop PhonePe PDF here</div>
+        <div style="font-size:13px;color:var(--text-tertiary)">or click to browse · Only DEBIT transactions are imported</div>
+      </div>
+      <input type="file" id="ppFileInput" accept=".pdf" style="display:none" onchange="handlePPFile(this.files[0])">
+
+      <div id="ppStagingArea" style="display:none;margin-top:16px">
+        <div class="pp-stats" id="ppStats"></div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:12px;flex-wrap:wrap">
+          <div style="font-size:13px;font-weight:600"><span id="ppSelectedCount">0</span> selected</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn btn-secondary" style="font-size:12px;padding:6px 12px" onclick="ppSelectAll(true)">Select All</button>
+            <button class="btn btn-secondary" style="font-size:12px;padding:6px 12px" onclick="ppSelectAll(false)">Deselect All</button>
+            <button class="btn btn-primary" style="font-size:13px;padding:8px 16px" onclick="ppBulkSave()">
+              <i data-lucide="save"></i> Bulk Save Selected
+            </button>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto">
+          <table class="pp-table" id="ppTable">
+            <thead>
+              <tr>
+                <th style="width:32px"><input type="checkbox" id="ppCheckAll" onchange="ppSelectAll(this.checked)"></th>
+                <th>Date</th>
+                <th>Merchant</th>
+                <th>Amount (₹)</th>
+                <th>Category</th>
+                <th>Card</th>
+                <th>Comment</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="ppTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderExpenses(){
+  const expView = window._expTab || 'list';
+  if(expView === 'phonepe') return renderExpensesPhonePe();
+
   let e=CACHE[currentMonth]||[];
   
   // Apply filters
@@ -2061,6 +2136,14 @@ function renderExpenses(){
   const cardsHTML = renderExpenseCards(paginated);
   
   return`
+    <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid var(--border-light)">
+      <button onclick="window._expTab='list';renderView()" style="padding:10px 20px;border:none;background:none;font-weight:700;font-size:14px;cursor:pointer;border-bottom:2px solid var(--accent-primary);margin-bottom:-2px;color:var(--accent-primary);font-family:inherit">
+        Transactions
+      </button>
+      <button onclick="window._expTab='phonepe';renderView()" style="padding:10px 20px;border:none;background:none;font-weight:500;font-size:14px;cursor:pointer;color:var(--text-secondary);border-bottom:2px solid transparent;margin-bottom:-2px;font-family:inherit">
+        📱 PhonePe Import
+      </button>
+    </div>
     ${renderFiltersBar()}
     
     ${selectedExpenses.size > 0 ? `
@@ -2347,58 +2430,7 @@ SIP (Mutual Fund) | 0 | pending`;
       </div>
     </div>
 
-    <div class="widget" id="ppImportWidget">
-      <div class="widget-header">
-        <div class="widget-title">📱 Import from PhonePe</div>
-        <div style="font-size:12px;color:var(--text-tertiary)">PhonePe → History → Download Statement</div>
-      </div>
-
-      <div class="pp-upload-zone" id="ppDropZone"
-           onclick="document.getElementById('ppFileInput').click()"
-           ondragover="event.preventDefault();this.classList.add('drag-over')"
-           ondragleave="this.classList.remove('drag-over')"
-           ondrop="event.preventDefault();this.classList.remove('drag-over');handlePPFile(event.dataTransfer.files[0])">
-        <div style="font-size:36px;margin-bottom:8px">📄</div>
-        <div style="font-weight:600;margin-bottom:4px">Drop PhonePe PDF here</div>
-        <div style="font-size:13px;color:var(--text-tertiary)">or click to browse</div>
-      </div>
-      <input type="file" id="ppFileInput" accept=".pdf" style="display:none" onchange="handlePPFile(this.files[0])">
-
-      <div id="ppStagingArea" style="display:none;margin-top:16px">
-        <div class="pp-stats" id="ppStats"></div>
-        <div id="ppPdfPreview" style="margin-bottom:16px"></div>
-
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:12px;flex-wrap:wrap">
-          <div style="font-size:13px;font-weight:600"><span id="ppSelectedCount">0</span> selected</div>
-          <div style="display:flex;gap:8px;align-items:center">
-            <button class="btn btn-secondary" style="font-size:12px;padding:6px 12px" onclick="ppSelectAll(true)">Select All</button>
-            <button class="btn btn-secondary" style="font-size:12px;padding:6px 12px" onclick="ppSelectAll(false)">Deselect All</button>
-            <button class="btn btn-primary" style="font-size:13px;padding:8px 16px" onclick="ppBulkSave()">
-              <i data-lucide="save"></i> Bulk Save Selected
-            </button>
-          </div>
-        </div>
-
-        <div style="overflow-x:auto">
-          <table class="pp-table" id="ppTable">
-            <thead>
-              <tr>
-                <th style="width:32px"><input type="checkbox" id="ppCheckAll" onchange="ppSelectAll(this.checked)"></th>
-                <th>Date</th>
-                <th>Merchant</th>
-                <th>Amount (₹)</th>
-                <th>Category</th>
-                <th>Card</th>
-                <th>Comment</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="ppTableBody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  `;
+    `;
 }
 
 function exportCSV(){
@@ -2706,110 +2738,157 @@ async function handlePPFile(file) {
   if (!file || file.type !== 'application/pdf') { toast('Please select a PhonePe PDF','error'); return; }
 
   const zone = document.getElementById('ppDropZone');
-  zone.innerHTML = '<div style="font-size:24px">⏳</div><div style="font-weight:600;margin-top:8px">Parsing PDF…</div>';
+  const setStatus = (icon, msg, sub) => {
+    zone.innerHTML = '<div style="font-size:28px">'+icon+'</div><div style="font-weight:600;margin-top:8px">'+msg+'</div>'+(sub?'<div style="font-size:12px;color:var(--text-tertiary);margin-top:4px">'+sub+'</div>':'');
+  };
+  setStatus('\u23f3','Loading OCR engine\u2026','First run downloads ~5MB language data');
 
   try {
     if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js not loaded');
+    if (typeof Tesseract === 'undefined') throw new Error('Tesseract.js not loaded — refresh page');
+
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
-    ppTransactions = [];
-    const MONTH_MAP = { jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',
-                        jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12' };
+    setStatus('\u23f3','Initializing OCR\u2026','Loading language model');
+    if (!window._tessWorker) {
+      window._tessWorker = await Tesseract.createWorker('eng', 1, {
+        workerPath: 'https://unpkg.com/tesseract.js@5/dist/worker.min.js',
+        logger: () => {}
+      });
+    }
+    const worker = window._tessWorker;
 
-    // Render pages to canvas for visual preview + extract text
-    const previewDiv = document.getElementById('ppPdfPreview');
-    previewDiv.innerHTML = '<div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">📄 Statement Preview (reference for amounts & dates)</div>';
+    ppTransactions = [];
+    const SKIP = new Set(['Paid','to','Received','from','Transfer','Transaction','UTR','No.','ID','Credited']);
+    const RUPEE = new Set(['7','F','f','#','=','\u20b9','z','Z','J','I','T']);
+    const MON = {jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',
+                 jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
+
+    function cleanAmt(raw) {
+      if (!raw) return '';
+      let s = raw.trim();
+      if (s.length && RUPEE.has(s[0])) s = s.slice(1);
+      s = s.replace(/,/g,'').trim();
+      const n = parseFloat(s);
+      return isNaN(n) ? '' : n;
+    }
+
+    function parseDate(str) {
+      const m = str.match(/([A-Za-z]{3})\w*\s+(\d{1,2})[,.]?\s*(\d{4})/);
+      if (!m) return '';
+      const mon = MON[m[1].toLowerCase()];
+      return mon ? m[3]+'-'+mon+'-'+m[2].padStart(2,'0') : '';
+    }
 
     for (let p = 1; p <= pdf.numPages; p++) {
+      setStatus('\uD83D\uDD0D','Page '+p+' of '+pdf.numPages,'Extracting merchants + OCR');
       const page = await pdf.getPage(p);
 
-      // Render to canvas for visual reference
-      const scale = Math.min(600 / page.getViewport({scale:1}).width, 1.2);
-      const viewport = page.getViewport({ scale });
-      const canvas = document.createElement('canvas');
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      canvas.style.cssText = 'width:100%;border:1px solid var(--border-light);border-radius:6px;margin-bottom:6px;display:block';
-      previewDiv.appendChild(canvas);
-      await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-
-      // Extract text items with positions
+      // PDF.js: merchant names
       const content = await page.getTextContent();
-      const items = content.items.filter(i => i.str.trim());
-
-      // Group by y position (±4px)
-      const rows = {};
-      for (const item of items) {
+      const rowsMap = {};
+      for (const item of content.items.filter(i => i.str.trim())) {
         const y = Math.round(item.transform[5] / 6) * 6;
-        if (!rows[y]) rows[y] = [];
-        rows[y].push({ text: item.str, x: item.transform[4], y: item.transform[5] });
+        if (!rowsMap[y]) rowsMap[y] = [];
+        rowsMap[y].push({ text: item.str, x: item.transform[4] });
       }
+      const sortedRows = Object.entries(rowsMap).sort((a,b) => b[0]-a[0]);
 
-      // Sort rows by y descending (PDF y=0 is bottom)
-      const sortedRows = Object.entries(rows).sort((a,b) => b[0]-a[0]);
-
-      // Find transaction rows: rows with DEBIT or CREDIT in type column (x ~420)
-      let pendingMerchantY = null;
-
+      const pageDebitRows = [];
       for (const [y, row] of sortedRows) {
-        const typeWord = row.find(w => (w.text === 'DEBIT' || w.text === 'CREDIT') && w.x > 380 && w.x < 480);
-        if (!typeWord) continue;
-        if (typeWord.text !== 'DEBIT') continue; // skip credits
-
-        // Merchant: words between x=120 and x=380, excluding keywords
-        const SKIP = new Set(['Paid','to','Received','from','Transfer','Transaction','UTR','No.','ID']);
-        const merchantWords = row
-          .filter(w => w.x > 115 && w.x < 385 && !SKIP.has(w.text) && w.text.replace(/\x00/g,'').trim())
+        if (!row.find(w => w.text === 'DEBIT' && w.x > 380 && w.x < 490)) continue;
+        let merchant = row.filter(w => w.x > 115 && w.x < 385)
+          .sort((a,b) => a.x - b.x)
           .map(w => w.text.replace(/[\x00-\x1f]/g,'').trim())
-          .filter(Boolean);
-        let merchant = merchantWords.join(' ').trim();
-
-        // Long merchant names wrap to next row — check adjacent row
+          .filter(Boolean).join(' ')
+          .replace(/^Paid\s+to\s+/i,'')
+          .replace(/^Received\s+from\s+/i,'')
+          .replace(/^Transfer\s+to\s+/i,'')
+          .trim();
         const yNum = parseFloat(y);
         for (const [y2, row2] of sortedRows) {
-          const yDiff = Math.abs(parseFloat(y2) - yNum);
-          if (yDiff > 4 && yDiff < 18) {
-            const hasType = row2.find(w => w.text === 'DEBIT' || w.text === 'CREDIT');
-            if (!hasType) {
-              const extra = row2
-                .filter(w => w.x > 115 && w.x < 385 && !SKIP.has(w.text))
-                .map(w => w.text.replace(/[\x00-\x1f]/g,'').trim())
-                .filter(w => w && /[A-Za-z]/.test(w))
-                .join(' ').trim();
-              if (extra && !merchant.toLowerCase().includes(extra.toLowerCase().slice(0,5))) {
-                merchant += ' ' + extra;
-              }
-            }
+          const d = Math.abs(parseFloat(y2) - yNum);
+          if (d > 4 && d < 20 && !row2.find(w => w.text==='DEBIT'||w.text==='CREDIT')) {
+            const extra = row2.filter(w => w.x>115 && w.x<385 && !SKIP.has(w.text))
+              .map(w => w.text.replace(/[\x00-\x1f]/g,'').trim())
+              .filter(w => w && /[A-Za-z]/.test(w)).join(' ').trim();
+            if (extra && !merchant.toLowerCase().includes(extra.toLowerCase().slice(0,5)))
+              merchant += ' ' + extra;
           }
         }
-        merchant = merchant.trim();
+        pageDebitRows.push(merchant.trim());
+      }
 
+      // OCR: dates + amounts
+      const vp = page.getViewport({ scale: 2.8 });
+      const cv = document.createElement('canvas');
+      cv.width = vp.width; cv.height = vp.height;
+      await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
+
+      const ocrRes   = await worker.recognize(cv);
+      const ocrWords = ocrRes.data.words.filter(w => w.text.trim() && w.confidence > 15);
+      const W = cv.width;
+
+      const ocrExtracted = [];
+      let lastDate = '';
+
+      for (const dw of ocrWords.filter(w => w.text === 'DEBIT')) {
+        const rowY = (dw.bbox.y0 + dw.bbox.y1) / 2;
+        const tol  = 45;
+
+        const dateStr = ocrWords
+          .filter(w => w.bbox.x0 < W*0.22 && Math.abs((w.bbox.y0+w.bbox.y1)/2 - rowY) < tol)
+          .sort((a,b) => a.bbox.x0 - b.bbox.x0).map(w => w.text).join(' ');
+        const pDate = parseDate(dateStr) || lastDate;
+        if (pDate) lastDate = pDate;
+
+        const amtStr = ocrWords
+          .filter(w => w.bbox.x0 > W*0.82 && Math.abs((w.bbox.y0+w.bbox.y1)/2 - rowY) < tol)
+          .sort((a,b) => a.bbox.x0 - b.bbox.x0).map(w => w.text).join('');
+
+        ocrExtracted.push({ date: pDate, amount: cleanAmt(amtStr) });
+      }
+
+      const count = Math.min(pageDebitRows.length, ocrExtracted.length);
+      for (let i = 0; i < count; i++) {
+        const merchant = pageDebitRows[i];
         ppTransactions.push({
-          id: 'pp_' + Date.now() + '_' + Math.random().toString(36).slice(2),
+          id: 'pp_'+Date.now()+'_'+Math.random().toString(36).slice(2),
           merchant,
-          date: '',       // user fills
-          amount: '',     // user fills
+          date:   ocrExtracted[i].date,
+          amount: ocrExtracted[i].amount,
           category: ppGuessCategory(merchant),
           card: 'UPI',
-          comment: '',
-          include: true,
-          dupFlag: false,
+          comment: merchant.split(' ')[0] || '',
+          include: true, dupFlag: false,
+        });
+      }
+      for (let i = count; i < pageDebitRows.length; i++) {
+        const merchant = pageDebitRows[i];
+        ppTransactions.push({
+          id: 'pp_'+Date.now()+'_'+Math.random().toString(36).slice(2),
+          merchant, date:'', amount:'',
+          category: ppGuessCategory(merchant), card:'UPI',
+          comment: merchant.split(' ')[0]||'',
+          include:true, dupFlag:false,
         });
       }
     }
 
     ppRenderStaging();
-    zone.innerHTML = '<div style="font-size:24px">✅</div><div style="font-weight:600;margin-top:6px">PDF loaded — fill amounts & dates, then bulk save</div>';
+    const filled  = ppTransactions.filter(t => t.date && t.amount !== '').length;
+    const missing = ppTransactions.length - filled;
+    setStatus('\u2705','Parsed '+ppTransactions.length+' transactions',
+      missing ? filled+' auto-filled \u00b7 '+missing+' need review' : 'All fields auto-filled \u2713');
 
   } catch(err) {
-    zone.innerHTML = '<div style="font-size:24px">❌</div><div style="font-weight:600;margin-top:6px">Parse failed: '+err.message+'</div>';
-    toast('PDF parse error: '+err.message, 'error');
+    setStatus('\u274c','Parse failed',err.message);
+    toast('PDF parse error: '+err.message,'error');
   }
 }
-
 function ppCheckDuplicates() {
   const existing = CACHE[currentMonth] || [];
   ppTransactions.forEach(txn => {
@@ -2863,7 +2942,7 @@ function ppRenderStaging() {
       </td>
       <td>
         <input class="pp-input" style="width:110px" type="text"
-          value="${t.comment}" oninput="ppUpdate(${i},'comment',this.value)" placeholder="${t.merchant.split(' ')[0]}">
+          value="${t.comment}" oninput="ppUpdate(${i},'comment',this.value)" placeholder="${t.merchant.split(' ')[0] !== 'Paid' ? t.merchant.split(' ')[0] : t.merchant}">
       </td>
       <td>${t.dupFlag ? '<span class="pp-dup-badge">⚠ DUP</span>' : '<span style="font-size:10px;color:var(--success)">✓ OK</span>'}</td>
     </tr>
