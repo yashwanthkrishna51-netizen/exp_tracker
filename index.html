@@ -1,4 +1,4 @@
-​<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8"/>
@@ -768,6 +768,28 @@ body {
 [data-theme="dark"] .debug-actions { background: #1e1e1e; border-top-color: #2e2e2e; }
 .debug-actions .btn { flex: 1; justify-content: center; font-size: 13px; padding: 9px 10px; }
 
+/* PhonePe Import Staging Table */
+.pp-table { width:100%; border-collapse:collapse; font-size:12px; }
+.pp-table th { background:#f5f5f5; padding:8px 10px; text-align:left; font-size:10px; font-weight:800; letter-spacing:0.8px; text-transform:uppercase; color:#666; border-bottom:2px solid #e0e0e0; white-space:nowrap; }
+[data-theme="dark"] .pp-table th { background:#1a1a1a; color:#888; border-bottom-color:#333; }
+.pp-table td { padding:6px 8px; border-bottom:1px solid #f0f0f0; vertical-align:middle; }
+[data-theme="dark"] .pp-table td { border-bottom-color:#222; }
+.pp-table tr.pp-dup td { background:rgba(245,158,11,0.07); }
+.pp-table tr.pp-skip { opacity:0.4; }
+.pp-dup-badge { font-size:9px; font-weight:800; background:rgba(245,158,11,0.15); color:#b45309; border:1px solid rgba(245,158,11,0.3); padding:1px 6px; border-radius:99px; letter-spacing:0.4px; white-space:nowrap; }
+.pp-input { width:100%; padding:4px 7px; border:1px solid #e0e0e0; border-radius:5px; font-size:12px; background:var(--bg-secondary); color:var(--text-primary); font-family:inherit; }
+.pp-input:focus { outline:none; border-color:#FF6B35; }
+.pp-select { padding:4px 6px; border:1px solid #e0e0e0; border-radius:5px; font-size:11px; background:var(--bg-secondary); color:var(--text-primary); font-family:inherit; }
+.pp-merchant { font-weight:600; font-size:12px; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pp-preview { width:100%; border:1px solid var(--border-light); border-radius:8px; overflow:hidden; background:#fff; margin-bottom:16px; }
+.pp-upload-zone { border:2px dashed var(--border-medium); border-radius:12px; padding:40px 20px; text-align:center; cursor:pointer; transition:all 0.2s; }
+.pp-upload-zone:hover { border-color:#FF6B35; background:var(--accent-light); }
+.pp-upload-zone.drag-over { border-color:#FF6B35; background:var(--accent-light); }
+.pp-stats { display:flex; gap:16px; padding:12px 16px; background:var(--bg-secondary); border-radius:8px; margin-bottom:12px; }
+.pp-stat { text-align:center; }
+.pp-stat-val { font-size:20px; font-weight:700; color:var(--accent-primary); }
+.pp-stat-label { font-size:10px; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.5px; }
+
 /* Mobile: portrait — single column */
 @media (max-width: 640px) {
   .debug-overlay { padding: 0; align-items: flex-end; }
@@ -1145,6 +1167,7 @@ body {
 
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://unpkg.com/lucide@0.294.0/dist/umd/lucide.min.js" defer onload="typeof initLucideIcons==='function'&&initLucideIcons()"></script>
 <script>
 // Core Data & Config - PRESERVE ALL AUTH
@@ -2323,6 +2346,58 @@ SIP (Mutual Fund) | 0 | pending`;
         </button>
       </div>
     </div>
+
+    <div class="widget" id="ppImportWidget">
+      <div class="widget-header">
+        <div class="widget-title">📱 Import from PhonePe</div>
+        <div style="font-size:12px;color:var(--text-tertiary)">PhonePe → History → Download Statement</div>
+      </div>
+
+      <div class="pp-upload-zone" id="ppDropZone"
+           onclick="document.getElementById('ppFileInput').click()"
+           ondragover="event.preventDefault();this.classList.add('drag-over')"
+           ondragleave="this.classList.remove('drag-over')"
+           ondrop="event.preventDefault();this.classList.remove('drag-over');handlePPFile(event.dataTransfer.files[0])">
+        <div style="font-size:36px;margin-bottom:8px">📄</div>
+        <div style="font-weight:600;margin-bottom:4px">Drop PhonePe PDF here</div>
+        <div style="font-size:13px;color:var(--text-tertiary)">or click to browse</div>
+      </div>
+      <input type="file" id="ppFileInput" accept=".pdf" style="display:none" onchange="handlePPFile(this.files[0])">
+
+      <div id="ppStagingArea" style="display:none;margin-top:16px">
+        <div class="pp-stats" id="ppStats"></div>
+        <div id="ppPdfPreview" style="margin-bottom:16px"></div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:12px;flex-wrap:wrap">
+          <div style="font-size:13px;font-weight:600"><span id="ppSelectedCount">0</span> selected</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn btn-secondary" style="font-size:12px;padding:6px 12px" onclick="ppSelectAll(true)">Select All</button>
+            <button class="btn btn-secondary" style="font-size:12px;padding:6px 12px" onclick="ppSelectAll(false)">Deselect All</button>
+            <button class="btn btn-primary" style="font-size:13px;padding:8px 16px" onclick="ppBulkSave()">
+              <i data-lucide="save"></i> Bulk Save Selected
+            </button>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto">
+          <table class="pp-table" id="ppTable">
+            <thead>
+              <tr>
+                <th style="width:32px"><input type="checkbox" id="ppCheckAll" onchange="ppSelectAll(this.checked)"></th>
+                <th>Date</th>
+                <th>Merchant</th>
+                <th>Amount (₹)</th>
+                <th>Category</th>
+                <th>Card</th>
+                <th>Comment</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="ppTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   `;
 }
 
@@ -2575,6 +2650,312 @@ function initAnalyticsCharts(){
       plugins: {legend: {position: 'right'}}
     }
   });
+}
+
+// ── PhonePe Import ────────────────────────────────────────────────────────
+const MERCHANT_CATEGORY_MAP = {
+  // Dining
+  'swiggy': 'Dining', 'swiggy ltd': 'Dining', 'swiggy instamart': 'Groceries',
+  'zomato': 'Dining', 'blinkit': 'Groceries', 'zepto': 'Groceries',
+  'dominos': 'Dining', 'mcdonald': 'Dining', 'kfc': 'Dining', 'subway': 'Dining',
+  'snackit': 'Dining', 'pan shop': 'Dining', 'tea point': 'Dining',
+  'restaurant': 'Dining', 'mehfil': 'Dining', 'cafe': 'Dining',
+  // Groceries
+  'rice depot': 'Groceries', 'mart': 'Groceries', 'traders': 'Groceries',
+  'hanuman traders': 'Groceries',
+  // Transport
+  'ola': 'Transport', 'uber': 'Transport', 'rapido': 'Transport',
+  'roppen': 'Transport', 'namma yatri': 'Transport',
+  // Fuel
+  'petrol': 'Fuel', 'fuel': 'Fuel', 'hp ': 'Fuel', 'bpcl': 'Fuel', 'iocl': 'Fuel',
+  'puncture': 'Fuel',
+  // Home / Office
+  'skootr': 'Home', 'urban company': 'Home', 'urbanclap': 'Home',
+  'electricity': 'Home', 'water': 'Home',
+  // EMI / Finance
+  'cred': 'EMI', 'loan': 'EMI', 'emi': 'EMI', 'hdfc': 'EMI', 'axis bank': 'EMI',
+  // Pets
+  'petpai': 'Pets', 'pet': 'Pets', 'vet': 'Pets',
+  // Health
+  'pharmacy': 'Health', 'medical': 'Health', 'hospital': 'Health', 'clinic': 'Health',
+  'apollo': 'Health', 'netmeds': 'Health', 'pharmeasy': 'Health',
+  // Telecom
+  'jio': 'Telecom', 'airtel': 'Telecom', 'vi ': 'Telecom', 'bsnl': 'Telecom',
+  // Investment
+  'zerodha': 'Investment', 'groww': 'Investment', 'sip': 'Investment',
+  // Insurance
+  'insurance': 'Insurance', 'lic': 'Insurance',
+  // Travel
+  'irctc': 'Travel', 'makemytrip': 'Travel', 'goibibo': 'Travel', 'yatra': 'Travel',
+  'flight': 'Travel', 'hotel': 'Travel',
+  // UPI/Cash
+  'paytm': 'UPI/Cash',
+};
+
+function ppGuessCategory(merchant) {
+  const m = merchant.toLowerCase();
+  for (const [key, cat] of Object.entries(MERCHANT_CATEGORY_MAP)) {
+    if (m.includes(key)) return cat;
+  }
+  return 'Misc';
+}
+
+let ppTransactions = [];
+
+async function handlePPFile(file) {
+  if (!file || file.type !== 'application/pdf') { toast('Please select a PhonePe PDF','error'); return; }
+
+  const zone = document.getElementById('ppDropZone');
+  zone.innerHTML = '<div style="font-size:24px">⏳</div><div style="font-weight:600;margin-top:8px">Parsing PDF…</div>';
+
+  try {
+    if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js not loaded');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+    ppTransactions = [];
+    const MONTH_MAP = { jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',
+                        jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12' };
+
+    // Render pages to canvas for visual preview + extract text
+    const previewDiv = document.getElementById('ppPdfPreview');
+    previewDiv.innerHTML = '<div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">📄 Statement Preview (reference for amounts & dates)</div>';
+
+    for (let p = 1; p <= pdf.numPages; p++) {
+      const page = await pdf.getPage(p);
+
+      // Render to canvas for visual reference
+      const scale = Math.min(600 / page.getViewport({scale:1}).width, 1.2);
+      const viewport = page.getViewport({ scale });
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      canvas.style.cssText = 'width:100%;border:1px solid var(--border-light);border-radius:6px;margin-bottom:6px;display:block';
+      previewDiv.appendChild(canvas);
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+
+      // Extract text items with positions
+      const content = await page.getTextContent();
+      const items = content.items.filter(i => i.str.trim());
+
+      // Group by y position (±4px)
+      const rows = {};
+      for (const item of items) {
+        const y = Math.round(item.transform[5] / 6) * 6;
+        if (!rows[y]) rows[y] = [];
+        rows[y].push({ text: item.str, x: item.transform[4], y: item.transform[5] });
+      }
+
+      // Sort rows by y descending (PDF y=0 is bottom)
+      const sortedRows = Object.entries(rows).sort((a,b) => b[0]-a[0]);
+
+      // Find transaction rows: rows with DEBIT or CREDIT in type column (x ~420)
+      let pendingMerchantY = null;
+
+      for (const [y, row] of sortedRows) {
+        const typeWord = row.find(w => (w.text === 'DEBIT' || w.text === 'CREDIT') && w.x > 380 && w.x < 480);
+        if (!typeWord) continue;
+        if (typeWord.text !== 'DEBIT') continue; // skip credits
+
+        // Merchant: words between x=120 and x=380, excluding keywords
+        const SKIP = new Set(['Paid','to','Received','from','Transfer','Transaction','UTR','No.','ID']);
+        const merchantWords = row
+          .filter(w => w.x > 115 && w.x < 385 && !SKIP.has(w.text) && w.text.replace(/\x00/g,'').trim())
+          .map(w => w.text.replace(/[\x00-\x1f]/g,'').trim())
+          .filter(Boolean);
+        let merchant = merchantWords.join(' ').trim();
+
+        // Long merchant names wrap to next row — check adjacent row
+        const yNum = parseFloat(y);
+        for (const [y2, row2] of sortedRows) {
+          const yDiff = Math.abs(parseFloat(y2) - yNum);
+          if (yDiff > 4 && yDiff < 18) {
+            const hasType = row2.find(w => w.text === 'DEBIT' || w.text === 'CREDIT');
+            if (!hasType) {
+              const extra = row2
+                .filter(w => w.x > 115 && w.x < 385 && !SKIP.has(w.text))
+                .map(w => w.text.replace(/[\x00-\x1f]/g,'').trim())
+                .filter(w => w && /[A-Za-z]/.test(w))
+                .join(' ').trim();
+              if (extra && !merchant.toLowerCase().includes(extra.toLowerCase().slice(0,5))) {
+                merchant += ' ' + extra;
+              }
+            }
+          }
+        }
+        merchant = merchant.trim();
+
+        ppTransactions.push({
+          id: 'pp_' + Date.now() + '_' + Math.random().toString(36).slice(2),
+          merchant,
+          date: '',       // user fills
+          amount: '',     // user fills
+          category: ppGuessCategory(merchant),
+          card: 'UPI',
+          comment: '',
+          include: true,
+          dupFlag: false,
+        });
+      }
+    }
+
+    ppRenderStaging();
+    zone.innerHTML = '<div style="font-size:24px">✅</div><div style="font-weight:600;margin-top:6px">PDF loaded — fill amounts & dates, then bulk save</div>';
+
+  } catch(err) {
+    zone.innerHTML = '<div style="font-size:24px">❌</div><div style="font-weight:600;margin-top:6px">Parse failed: '+err.message+'</div>';
+    toast('PDF parse error: '+err.message, 'error');
+  }
+}
+
+function ppCheckDuplicates() {
+  const existing = CACHE[currentMonth] || [];
+  ppTransactions.forEach(txn => {
+    if (!txn.amount) { txn.dupFlag = false; return; }
+    const amt = parseFloat(txn.amount);
+    txn.dupFlag = existing.some(e =>
+      Math.abs(e.amount - amt) < 0.01 &&
+      (!txn.date || e.date === txn.date)
+    );
+  });
+}
+
+function ppRenderStaging() {
+  ppCheckDuplicates();
+  const debitCount = ppTransactions.length;
+  const selected = ppTransactions.filter(t => t.include).length;
+  const dups = ppTransactions.filter(t => t.dupFlag).length;
+
+  document.getElementById('ppStats').innerHTML = `
+    <div class="pp-stat"><div class="pp-stat-val">${debitCount}</div><div class="pp-stat-label">Transactions</div></div>
+    <div class="pp-stat"><div class="pp-stat-val">${selected}</div><div class="pp-stat-label">Selected</div></div>
+    <div class="pp-stat"><div class="pp-stat-val" style="color:var(--warning)">${dups}</div><div class="pp-stat-label">Possible Dups</div></div>
+    <div class="pp-stat"><div class="pp-stat-val" style="color:var(--success)">${debitCount - dups}</div><div class="pp-stat-label">Clean</div></div>
+  `;
+  document.getElementById('ppSelectedCount').textContent = selected;
+  document.getElementById('ppStagingArea').style.display = 'block';
+
+  const cards = getCards();
+  const tbody = document.getElementById('ppTableBody');
+  tbody.innerHTML = ppTransactions.map((t, i) => `
+    <tr class="${t.dupFlag ? 'pp-dup' : ''} ${!t.include ? 'pp-skip' : ''}">
+      <td><input type="checkbox" ${t.include ? 'checked' : ''} onchange="ppToggle(${i}, this.checked)"></td>
+      <td>
+        <input class="pp-input" style="width:100px" type="date"
+          value="${t.date}" oninput="ppUpdate(${i},'date',this.value)" placeholder="YYYY-MM-DD">
+      </td>
+      <td><div class="pp-merchant" title="${t.merchant}">${t.merchant||'—'}</div></td>
+      <td>
+        <input class="pp-input" style="width:80px" type="number" step="0.01" min="0"
+          value="${t.amount}" oninput="ppUpdate(${i},'amount',this.value)" placeholder="0.00">
+      </td>
+      <td>
+        <select class="pp-select" onchange="ppUpdate(${i},'category',this.value)">
+          ${CATS.map(cat => `<option value="${cat}" ${t.category===cat?'selected':''}>${cat}</option>`).join('')}
+        </select>
+      </td>
+      <td>
+        <select class="pp-select" onchange="ppUpdate(${i},'card',this.value)">
+          ${cards.map(card => `<option value="${card}" ${t.card===card?'selected':''}>${card}</option>`).join('')}
+        </select>
+      </td>
+      <td>
+        <input class="pp-input" style="width:110px" type="text"
+          value="${t.comment}" oninput="ppUpdate(${i},'comment',this.value)" placeholder="${t.merchant.split(' ')[0]}">
+      </td>
+      <td>${t.dupFlag ? '<span class="pp-dup-badge">⚠ DUP</span>' : '<span style="font-size:10px;color:var(--success)">✓ OK</span>'}</td>
+    </tr>
+  `).join('');
+  initLucideIcons();
+}
+
+function ppUpdate(i, field, val) {
+  ppTransactions[i][field] = val;
+  if (field === 'amount' || field === 'date') {
+    ppCheckDuplicates();
+    // Update dup badge and row class without full re-render
+    const row = document.getElementById('ppTableBody').rows[i];
+    const t = ppTransactions[i];
+    row.className = (t.dupFlag ? 'pp-dup' : '') + (!t.include ? ' pp-skip' : '');
+    row.cells[7].innerHTML = t.dupFlag ? '<span class="pp-dup-badge">⚠ DUP</span>' : '<span style="font-size:10px;color:var(--success)">✓ OK</span>';
+    // Update stats
+    document.getElementById('ppStats').querySelectorAll('.pp-stat-val')[2].textContent = ppTransactions.filter(t=>t.dupFlag).length;
+  }
+}
+
+function ppToggle(i, val) {
+  ppTransactions[i].include = val;
+  const row = document.getElementById('ppTableBody').rows[i];
+  const t = ppTransactions[i];
+  row.className = (t.dupFlag ? 'pp-dup' : '') + (!t.include ? ' pp-skip' : '');
+  const selected = ppTransactions.filter(t => t.include).length;
+  document.getElementById('ppSelectedCount').textContent = selected;
+}
+
+function ppSelectAll(val) {
+  ppTransactions.forEach((t, i) => {
+    t.include = val;
+    if (document.getElementById('ppTableBody').rows[i]) {
+      document.getElementById('ppTableBody').rows[i].cells[0].querySelector('input').checked = val;
+      const row = document.getElementById('ppTableBody').rows[i];
+      row.className = (t.dupFlag ? 'pp-dup' : '') + (!t.include ? ' pp-skip' : '');
+    }
+  });
+  document.getElementById('ppSelectedCount').textContent = ppTransactions.filter(t => t.include).length;
+  if (document.getElementById('ppCheckAll')) document.getElementById('ppCheckAll').checked = val;
+}
+
+async function ppBulkSave() {
+  const toSave = ppTransactions.filter(t => t.include && t.amount && t.date);
+  if (!toSave.length) { toast('No complete rows to save (need date + amount)', 'error'); return; }
+
+  const incomplete = ppTransactions.filter(t => t.include && (!t.amount || !t.date));
+  if (incomplete.length) {
+    if (!confirm(`${incomplete.length} selected row(s) are missing date or amount and will be skipped. Save ${toSave.length} complete rows?`)) return;
+  }
+
+  // Group by month
+  const byMonth = {};
+  toSave.forEach(t => {
+    const m = t.date.slice(0,7);
+    if (!byMonth[m]) byMonth[m] = [];
+    byMonth[m].push({
+      id: t.id,
+      date: t.date,
+      cat: t.category,
+      card: t.card,
+      amount: parseFloat(t.amount),
+      comment: t.comment || t.merchant,
+      ts: Date.now()
+    });
+  });
+
+  let saved = 0;
+  for (const [m, expenses] of Object.entries(byMonth)) {
+    if (!CACHE[m]) CACHE[m] = [];
+    CACHE[m].push(...expenses);
+    saved += expenses.length;
+  }
+  saveCacheLocal();
+
+  // Sync each month
+  if (cfgOk()) {
+    toast('Saving & syncing…', 'info');
+    for (const m of Object.keys(byMonth)) {
+      await syncMonth(m);
+    }
+  }
+
+  toast(`✓ Saved ${saved} expenses`, 'success');
+  ppTransactions = ppTransactions.filter(t => !t.include || !t.amount || !t.date);
+  if (ppTransactions.length) ppRenderStaging();
+  else {
+    document.getElementById('ppStagingArea').style.display = 'none';
+    document.getElementById('ppDropZone').innerHTML = '<div style="font-size:36px;margin-bottom:8px">✅</div><div style="font-weight:600">All saved! Drop another PDF to continue.</div>';
+  }
+  if (currentView === 'dashboard') renderView();
 }
 
 // Nav Event Listeners
